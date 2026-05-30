@@ -1,0 +1,522 @@
+// VOIDBORN data model.
+//
+// INVARIANT #1 — realm, evolution stage, and the resolved look are NEVER stored.
+//   `activeFormKey` is stored; the stage within it is computed from `hammerCount`
+//   (see constants/realms). There is deliberately no `realm` or `stage` column anywhere.
+// INVARIANT #2 — `StrikeEvent` is append-only and is the source of truth for `hammerCount`.
+//   `Practitioner.hammerCount` is a reconcilable cache (jobs/reconcileHammer.ts).
+//
+// Note on `PractitionerEntity`: the README lists `activeFormKey` on both `Practitioner`
+// and `PractitionerEntity`. To keep a single source of truth we put `activeFormKey`,
+// `activeDomainKey`, and `activeManifestationPresetId` on `Practitioner`, and reserve
+// `PractitionerEntity` for entity-expression selections (active companion/bloodline/demeanor).
+// No field has two homes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────── enums
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Modality {
+  origin
+  pull
+  push
+  core
+  cardio
+  recovery
+}
+
+enum LeakCategory {
+  social
+  food
+  media
+  argument
+  validation
+  doubt
+}
+
+enum VowType {
+  major
+  minor
+}
+
+enum VowStatus {
+  active
+  kept
+  broken
+  cancelled
+}
+
+enum WagerStatus {
+  none
+  pending
+  won
+  lost
+  settled
+}
+
+enum FormTier {
+  free
+  premium
+  transcendent
+}
+
+enum CosmeticCategory {
+  trail
+  aura
+  core
+  surface
+  eyes
+  appendages
+  orbit
+  sigils
+}
+
+enum Rarity {
+  free
+  standard
+  premium
+  seasonal
+  event
+}
+
+enum CompanionRarity {
+  wandering
+  bound
+  ancient
+  void_herald
+}
+
+enum ScrollType {
+  lesser
+  abyssal
+}
+
+enum WagerKind {
+  heavenly_restriction
+  wagered_ki
+}
+
+enum EntitlementKind {
+  form
+  domain
+  bloodline
+  cosmetic
+  aura
+  artifact
+}
+
+// ─────────────────────────────────────────────────────────────── core
+
+model Practitioner {
+  id           String @id @default(cuid())
+  email        String @unique
+  passwordHash String
+  name         String
+  role         Role   @default(USER)
+
+  // live metrics (motion drivers) — NOT realm/stage
+  ki                Int       @default(100) // 0–100 integrity
+  shadowLevel       Int       @default(1) // 1–5 intensity
+  hammerCount       Int       @default(0) // reconcilable cache of StrikeEvent sum
+  streak            Int       @default(0)
+  lastLogDate       DateTime?
+  anchorCompletedAt DateTime?
+
+  // server-authoritative currency
+  crystals Int @default(0)
+
+  // soul-escrow / consequence state (facts, not looks — the look is resolved)
+  corruptedSince   DateTime?
+  penanceProgress  Int       @default(0) // consecutive full sessions toward cleanse (need 7)
+  restrictionScars Int       @default(0)
+  dormantSince     DateTime?
+
+  // companion pity counters (server-authoritative)
+  pullsSinceAncient Int @default(0)
+  pullsSinceHerald  Int @default(0)
+
+  // stored selections (NOT the resolved appearance)
+  activeFormKey               String  @default("void")
+  activeDomainKey             String  @default("dojo")
+  activeManifestationPresetId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt // reconcile is last-write-wins by this
+
+  entity           PractitionerEntity?
+  bond             Bond?
+  sessions         VoidSession[]
+  strikes          StrikeEvent[]
+  leaks            KiLeak[]
+  vows             Vow[]
+  cosmetics        PractitionerCosmetic[]
+  presets          ManifestationPreset[]
+  forms            PractitionerForm[]
+  domains          PractitionerDomain[]
+  decor            PractitionerDecor[]
+  bloodlines       PractitionerBloodline[]
+  companions       PractitionerCompanion[]
+  summons          CompanionSummon[]
+  wagers           WagerEvent[]
+  entitlements     Entitlement[]
+  sectMemberships  SectMember[]
+  coachReflections CoachReflection[]
+
+  @@index([email])
+}
+
+/// 1:1 entity-expression record. Stage is NEVER stored here — only active selections.
+model PractitionerEntity {
+  id                String       @id @default(cuid())
+  practitionerId    String       @unique
+  practitioner      Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  activeCompanionId String?
+  activeBloodlineId String?
+  demeanor          String       @default("neutral") // idle mood; expression only
+  updatedAt         DateTime     @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────── training / integrity
+
+/// APPEND-ONLY. Source of truth for hammerCount. Never updated or deleted in normal flow.
+model StrikeEvent {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  amount         Int // reps that struck; reps:0 NEVER produces a StrikeEvent
+  sessionId      String? // optional link to the VoidSession that produced it
+  occurredAt     DateTime     @default(now())
+
+  @@index([practitionerId, occurredAt])
+}
+
+model VoidSession {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  modality       Modality
+  reps           Int // reps:0 ⇒ recovery/stillness ⇒ no StrikeEvent
+  rating         Int? // 1–5 subjective
+  note           String?
+  occurredOn     DateTime     @default(now())
+  // client-supplied id for idempotent offline flush
+  clientId       String?
+
+  @@unique([practitionerId, clientId])
+  @@index([practitionerId, occurredOn])
+}
+
+model KiLeak {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  category       LeakCategory
+  label          String
+  cost           Int // ki debited
+  occurredAt     DateTime     @default(now())
+  clientId       String?
+
+  @@unique([practitionerId, clientId])
+  @@index([practitionerId, occurredAt])
+}
+
+model Vow {
+  id             String        @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner  @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  title          String
+  type           VowType
+  vowSubtype     String? // e.g. "heavenly_restriction"
+  status         VowStatus     @default(active)
+  startDate      DateTime      @default(now())
+  resolutionDate DateTime
+  wagerAmount    Int           @default(0)
+  wagerStatus    WagerStatus   @default(none)
+  resolvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  progressions   Progression[]
+
+  @@index([practitionerId, status])
+}
+
+model Progression {
+  id         String  @id @default(cuid())
+  vowId      String
+  vow        Vow     @relation(fields: [vowId], references: [id], onDelete: Cascade)
+  text       String
+  completed  Boolean @default(false)
+  orderIndex Int     @default(0)
+
+  @@index([vowId, orderIndex])
+}
+
+// ─────────────────────────────────────────────────────────────── entity / customization catalogs
+
+model EntityForm {
+  formKey     String             @id // "void" | "beast" | "humanoid" | transcendent keys
+  name        String
+  tier        FormTier
+  stageAssets Json // { riv: "void.riv", artboards: { "1": "...", ... "7": "..." }, inputs: [...] }
+  priceModel  Json // { kind: "free" } | { kind: "iap", productKey, priceUsd }
+  owners      PractitionerForm[]
+}
+
+/// Ownership of a premium form (non-consumable entitlement; void is implicitly owned).
+model PractitionerForm {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  formKey        String
+  form           EntityForm   @relation(fields: [formKey], references: [formKey], onDelete: Cascade)
+  grantedAt      DateTime     @default(now())
+
+  @@unique([practitionerId, formKey])
+}
+
+model CosmeticItem {
+  itemKey       String                 @id
+  category      CosmeticCategory
+  name          String
+  rarity        Rarity
+  defaultTint   String? // hex; tint applied on equip, never per-frame
+  layerSpec     Json // how the layer renders (artboard/overlay refs, blend)
+  priceModel    Json // { kind:"free" } | { kind:"crystals", amount } | { kind:"iap", productKey, priceUsd }
+  setKey        String? // Manifestation Set grouping
+  availableFrom DateTime?
+  availableTo   DateTime?
+  owners        PractitionerCosmetic[]
+
+  @@index([category])
+  @@index([setKey])
+}
+
+model PractitionerCosmetic {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  cosmeticItemId String
+  cosmeticItem   CosmeticItem @relation(fields: [cosmeticItemId], references: [itemKey], onDelete: Cascade)
+  acquiredAt     DateTime     @default(now())
+
+  @@unique([practitionerId, cosmeticItemId])
+}
+
+/// A named, saved avatarConfig. config holds per-layer { itemKey, tint } + demeanor.
+/// It does NOT store a resolved look — resolveManifestation() rebuilds appearance every time.
+model ManifestationPreset {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  name           String
+  config         Json
+  isActive       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([practitionerId])
+}
+
+// ─────────────────────────────────────────────────────────────── spaces & premium
+
+model DomainPack {
+  domainKey     String               @id // "dojo" | "frozen_wastes" | ...
+  name          String
+  aesthetic     String
+  tapEffect     String
+  kiBarMaterial String
+  soundscapeKey String
+  domainConfig  Json // R3F config (3D phase); parallax layers (2.5D)
+  priceModel    Json
+  availableFrom DateTime?
+  availableTo   DateTime?
+  owners        PractitionerDomain[]
+}
+
+model PractitionerDomain {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  domainKey      String
+  domain         DomainPack   @relation(fields: [domainKey], references: [domainKey], onDelete: Cascade)
+  grantedAt      DateTime     @default(now())
+
+  @@unique([practitionerId, domainKey])
+}
+
+model SpaceDecor {
+  decorKey   String              @id
+  name       String
+  slot       String // where it sits in the space
+  priceModel Json
+  owners     PractitionerDecor[]
+}
+
+model PractitionerDecor {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  decorKey       String
+  decor          SpaceDecor   @relation(fields: [decorKey], references: [decorKey], onDelete: Cascade)
+  placement      Json? // position in the space
+  acquiredAt     DateTime     @default(now())
+
+  @@unique([practitionerId, decorKey])
+}
+
+model Bloodline {
+  bloodlineKey String                  @id
+  name         String
+  stageAssets  Json // alternate stage-artboard set across all seven realms
+  lockedSlots  Json // cosmetic slots this lineage owns/locks
+  priceModel   Json
+  owners       PractitionerBloodline[]
+}
+
+model PractitionerBloodline {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  bloodlineKey   String
+  bloodline      Bloodline    @relation(fields: [bloodlineKey], references: [bloodlineKey], onDelete: Cascade)
+  grantedAt      DateTime     @default(now())
+
+  @@unique([practitionerId, bloodlineKey])
+}
+
+// ─────────────────────────────────────────────────────────────── companions (the ONLY RNG system)
+
+model Companion {
+  companionKey  String                  @id
+  name          String
+  rarity        CompanionRarity
+  utility       String // human-readable ability
+  // which scroll pools include it + relative weight (disclosed rates derive from these)
+  inLesserPool  Boolean                 @default(true)
+  inAbyssalPool Boolean                 @default(true)
+  weight        Int                     @default(100)
+  owners        PractitionerCompanion[]
+  summons       CompanionSummon[]
+}
+
+model PractitionerCompanion {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  companionKey   String
+  companion      Companion    @relation(fields: [companionKey], references: [companionKey], onDelete: Cascade)
+  acquiredAt     DateTime     @default(now())
+
+  @@unique([practitionerId, companionKey])
+}
+
+/// Server-side pull history — the audit trail for gacha. Pity is computed from practitioner counters.
+model CompanionSummon {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  scrollType     ScrollType
+  companionKey   String
+  companion      Companion    @relation(fields: [companionKey], references: [companionKey], onDelete: Cascade)
+  wasPity        Boolean      @default(false)
+  rolledValue    Float // the RNG roll, for audit
+  createdAt      DateTime     @default(now())
+
+  @@index([practitionerId, createdAt])
+}
+
+model WagerEvent {
+  id                    String       @id @default(cuid())
+  practitionerId        String
+  practitioner          Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  kind                  WagerKind
+  amount                Int // crystals (wagered_ki) or USD cents (heavenly_restriction)
+  currency              String       @default("crystal") // "crystal" | "usd"
+  status                WagerStatus  @default(pending)
+  vowId                 String?
+  stripePaymentIntentId String?
+  weekOf                DateTime? // for weekly-cap enforcement on wagered_ki
+  createdAt             DateTime     @default(now())
+  settledAt             DateTime?
+
+  @@index([practitionerId, status])
+}
+
+/// Non-consumable entitlements granted from verified purchases (RevenueCat). Restorable.
+model Entitlement {
+  id             String          @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner    @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  kind           EntitlementKind
+  productKey     String // maps to formKey / domainKey / bloodlineKey / itemKey
+  source         String          @default("revenuecat")
+  grantedAt      DateTime        @default(now())
+
+  @@unique([practitionerId, kind, productKey])
+}
+
+// ─────────────────────────────────────────────────────────────── systems
+
+model Bond {
+  id               String       @id @default(cuid())
+  practitionerId   String       @unique
+  practitioner     Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  value            Int          @default(0) // affinity; unlocks moods, never power
+  lastPresenceDate DateTime?
+  updatedAt        DateTime     @updatedAt
+}
+
+model Season {
+  seasonKey String   @id
+  name      String
+  startsAt  DateTime
+  endsAt    DateTime
+  dropKeys  Json // cosmetic/domain keys featured this season
+}
+
+model Sect {
+  sectKey     String       @id @default(cuid())
+  name        String
+  createdById String
+  createdAt   DateTime     @default(now())
+  members     SectMember[]
+}
+
+model SectMember {
+  id             String       @id @default(cuid())
+  sectKey        String
+  sect           Sect         @relation(fields: [sectKey], references: [sectKey], onDelete: Cascade)
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  role           String       @default("member") // "leader" | "member"
+  joinedAt       DateTime     @default(now())
+
+  @@unique([sectKey, practitionerId])
+}
+
+/// Cache of the Voice of the Void responses (rate-limit + reuse). Never the source of any metric.
+model CoachReflection {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  occasion       String // "rebirth" | "ascension" | "return" | "oracle"
+  promptHash     String
+  body           String
+  source         String       @default("claude") // "claude" | "fallback"
+  createdAt      DateTime     @default(now())
+
+  @@index([practitionerId, occasion, createdAt])
+}
