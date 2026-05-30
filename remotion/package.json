@@ -1,0 +1,17 @@
+{
+  "name": "voidborn-remotion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pre-rendered hero cinematics (Rebirth, RealmAscension, StrikeBurst, DailyRecap). Rendered to video and bundled / played by the app for the highest-attention set-pieces.",
+  "scripts": {
+    "dev": "remotion studio",
+    "render:rebirth": "remotion render Rebirth out/rebirth.mp4",
+    "render:ascension": "remotion render RealmAscension out/ascension.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "remotion": "^4.0.0"
+  }
+}
