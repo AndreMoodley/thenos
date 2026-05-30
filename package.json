@@ -1,0 +1,15 @@
+{
+  "name": "voidborn-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VOIDBORN monorepo root. Holds a minimal harness to unit-test the app's PURE client logic (resolveManifestation + realms) without the native RN toolchain — which is exercised on a dev build, not here. The app lives in voidborn/, the backend in server/.",
+  "scripts": {
+    "test:logic": "vitest run",
+    "test:logic:watch": "vitest",
+    "typecheck:logic": "tsc -p tsconfig.logic.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2",
+    "vitest": "^2.1.8"
+  }
+}

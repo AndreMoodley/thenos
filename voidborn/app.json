@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "VOIDBORN",
+    "slug": "voidborn",
+    "scheme": "voidborn",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "backgroundColor": "#05060a",
+    "splash": {
+      "backgroundColor": "#05060a",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": ["assets/**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.voidborn.client"
+    },
+    "android": {
+      "package": "app.voidborn.client",
+      "adaptiveIcon": { "backgroundColor": "#05060a" }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-dev-client",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        { "backgroundColor": "#05060a", "resizeMode": "contain" }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": null
+    }
+  }
+}

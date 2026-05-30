@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": [],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "voidborn/src/constants/**/*.ts",
+    "voidborn/src/manifestation/**/*.ts",
+    "voidborn/src/entity/stageResolver.ts",
+    "voidborn/src/entity/stageResolver.test.ts"
+  ]
+}
