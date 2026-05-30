@@ -24,6 +24,7 @@ with exactly what's required to close them.
 | Server unit tests (`vitest`) — realms + gacha | ✅ 12 passing |
 | **Pure client logic** typecheck + unit tests | ✅ 16 passing (resolver precedence, realms, bridge) |
 | **Full Expo app** typecheck (`tsc --noEmit`, all ~35 files) | ✅ clean against installed SDK 56 types |
+| **Full Expo app** Metro bundle (`expo export -p android`) | ✅ 1757 modules → 5.6MB Hermes bundle, no errors (whole graph resolves: Rive, R3F/`expo-gl`, `expo-audio`, Reanimated worklets) |
 
 Reproduce: `cd server && npm i && npx prisma migrate dev && npm run seed && npm test && npm run dev`
 then `curl :4000/health`; and `npm i && npm run test:logic` at the repo root for the pure client logic.
