@@ -12,7 +12,9 @@ node_modules/
 # Expo / RN
 voidborn/.expo/
 voidborn/dist/
+voidborn/dist-web/
 voidborn/web-build/
+voidborn/.artifacts/
 *.jks
 *.p8
 *.p12

@@ -29,17 +29,40 @@ with exactly what's required to close them.
 Reproduce: `cd server && npm i && npx prisma migrate dev && npm run seed && npm test && npm run dev`
 then `curl :4000/health`; and `npm i && npm run test:logic` at the repo root for the pure client logic.
 
-## Device-pending (cannot run in a cloud container — by nature)
+## The app now RUNS headless (web target) — verified end-to-end here
+
+`bash voidborn/scripts/headless-run.sh` runs the **whole game loop** in **headless Chromium** against
+the live backend and screenshots it (artifacts in `voidborn/.artifacts/`):
+
+| Check | Result |
+|---|---|
+| Web export (dev **and** `NODE_ENV=production`) | ✅ single Hermes bundle, no errors |
+| App boots in headless Chromium → **Rebirth** screen renders (entity + auth) | ✅ |
+| Demo login → **Domain** hub renders live server state (realm "True Ki Awakening 4/7", streak 11, ki 72, "8,910 to Transcendence", bonus-orbit) | ✅ |
+| Log a strike from the UI → server `hammerCount` advances | ✅ 9110 → 9130 |
+| Native **Android** export still bundles (web changes are additive, no native regression) | ✅ |
+
+This closes the old "does the app actually run?" gap **without a device**: the entity, hub, four
+spaces, offline loop, optimistic metrics, resolver, juice, reduce-motion and device-tier fallback all
+execute in a real browser. The **same web build is installable on an iPhone via Safari → Add to Home
+Screen** (no Apple account) — see `docs/IOS_BUILD.md`.
+
+Two real bugs were found and fixed by running it headless: (1) `babel.config.js` double-added
+`react-native-worklets/plugin` (babel-preset-expo already injects it) → Reanimated infinite render
+loop; (2) the auth gate rendered `<Redirect>` during render → router ping-pong. Both fixed; RN library
+versions were also realigned to the exact SDK 56 matrix.
+
+## Device-pending (genuinely needs a device/Apple account — by nature)
 
 | Gate | Why it's pending | To close it |
 |---|---|---|
-| **Phase 0:** Rive entity + DRACO glTF dojo at **60fps on a mid-range Android dev build** | needs EAS dev build + a physical/emulated GPU device; `rive-react-native` rides the New-Arch interop layer | `eas build --profile development -p android`, run `expo start --dev-client`, profile frame time |
-| **Phase 1:** sign up → rebirth → entity reacts at 60fps | same (on-device Rive) | same dev build |
-| Authored **art binaries** (`.riv`, DRACO `.glb`, audio) | these are made in Rive/Blender/a DAW, not by code | drop into `voidborn/assets/**` and wire the `require`s (each folder's README shows where) |
+| **Native iOS `.ipa` on your iPhone** | Apple code-signing needs your Apple Developer account on EAS (no Apple creds / macOS / EAS access in this container) | `docs/IOS_BUILD.md`: `eas device:create` + `eas build -p ios --profile preview` (one command, ~10–15 min) |
+| **60fps native Rive + true R3F 3D** on a mid-range device | needs an EAS dev build + GPU device; the web target uses the 2.5D/fallback path | `eas build --profile development -p ios|android`, `expo start --dev-client`, profile frame time |
+| Authored **art binaries** (`.riv`, DRACO `.glb`, audio) | made in Rive/Blender/a DAW, not by code | drop into `voidborn/assets/**` and wire the `require`s (each folder's README shows where) |
 | RevenueCat / Stripe live flows | need real store/PSP credentials & sandbox | wire keys; `/premium/reconcile` + escrow state machine are implemented and stubbed at the payment boundary |
 
 Until the art ships, the app renders a **metric-reactive `FallbackEntity`** and a placeholder R3F
-shrine — both real and live — so the loop is demonstrable on a dev build now.
+shrine — both real and live — so the loop is demonstrable headless now and on a dev build.
 
 ## Phase coverage (per BUILD_PROMPT)
 

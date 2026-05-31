@@ -2,7 +2,7 @@
 // overlay. Depth ≤ 1: spaces are swapped flat (router.replace) and reached by tap or horizontal swipe.
 import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { Slot, Redirect, useSegments, useRouter } from 'expo-router';
+import { Slot, useSegments, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView, Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -28,18 +28,21 @@ export default function RootLayout() {
     void hydrate();
   }, []);
 
+  // Auth gate. Navigate imperatively in an effect — rendering <Redirect> during the auth gate
+  // ping-pongs against the router on web (infinite re-render). One effect, fires on state change.
+  const router = useRouter();
+  useEffect(() => {
+    if (status === 'unauthed' && !inRebirth) router.replace('/(rebirth)');
+  }, [status, inRebirth]);
+
+  const booting = status === 'idle' || status === 'loading';
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="light" />
         <View style={styles.root}>
-          {status === 'idle' || status === 'loading' ? (
-            <Splash />
-          ) : status === 'unauthed' && !inRebirth ? (
-            <Redirect href="/(rebirth)" />
-          ) : (
-            <Shell inRebirth={inRebirth} authed={status === 'authed'} />
-          )}
+          {booting ? <Splash /> : <Shell inRebirth={inRebirth} authed={status === 'authed'} />}
         </View>
       </SafeAreaProvider>
     </GestureHandlerRootView>

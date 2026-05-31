@@ -6,15 +6,33 @@ Native modules ⇒ **dev build** (Expo Go cannot run Rive or `expo-gl`).
 ## Run
 
 ```bash
-npm install                                   # (use --legacy-peer-deps if React 19 peers complain)
-npx expo install                              # aligns expo-* subversions to the SDK (source of truth)
-eas build --profile development --platform android   # build the dev client once
+npm install --legacy-peer-deps                # React 19 peers
+eas build --profile development --platform android   # build the dev client once (native)
 npx expo start --dev-client
 npm run typecheck                             # tsc --noEmit (passes)
 ```
 
 Point the app at the server with `extra.apiUrl` in `app.json`, or rely on the dev default
-(`10.0.2.2:4000` on Android emulators, `localhost:4000` elsewhere — invariant #10).
+(`10.0.2.2:4000` on Android emulators, `localhost:4000`/page-origin on web — invariant #10).
+
+## Run HEADLESS on the web (no device, no Apple account)
+
+The app also targets the web via `react-native-web`, so the whole loop runs in a browser — and on an
+iPhone via Safari → Add to Home Screen. The two native-only spots are platform-split: Rive
+(`RiveEntity.web.tsx` → metric-reactive `FallbackEntity`) and R3F 3D (`Dojo3D.web.tsx` → 2.5D parallax).
+
+```bash
+npm run web                         # interactive dev server (expo start --web)
+npm run web:export                  # static bundle → dist-web/  (Hermes, single chunk)
+bash scripts/headless-run.sh        # backend + export + serve + drive in headless Chromium → .artifacts/
+```
+
+`scripts/headless-smoke.mjs` (Playwright) loads the app, logs in as the demo adept, opens the Domain,
+and logs a strike — asserting the realm/entity render and that the server `hammerCount` advanced. It
+prefers a browser at `CHROME_PATH` (or `/opt/pw-browsers/...`) so it works where Playwright's CDN is
+blocked.
+
+> iPhone install (Safari PWA now, native `.ipa`/TestFlight via EAS): see `../docs/IOS_BUILD.md`.
 
 ## Architecture (maps to the spec layout)
 
@@ -39,7 +57,9 @@ The code paths for **Rive** and **R3F** are complete and wired. The `.riv` / `.g
 are authored assets (not code) and are not in the repo — so the entity renders the live
 `FallbackEntity` and 3D renders a placeholder shrine until those drop into `assets/` and are wired
 (see each `assets/*/README.md`). Everything else — navigation, the offline loop, optimistic metrics,
-the resolver, reduce-motion, device-tier fallback, the juice layer — is real.
+the resolver, reduce-motion, device-tier fallback, the juice layer — is real, and the whole loop is
+**verified headless in a browser** (`scripts/headless-run.sh`). On native, Rive + true R3F take over;
+on web they use the same metric-reactive fallbacks the rest of the app already targets.
 
 ## Invariants honored
 No stored realm/stage/look (stage is computed; only `avatarConfig`+`activeFormKey` persist) · render

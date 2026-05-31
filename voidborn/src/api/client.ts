@@ -3,17 +3,38 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
+const stripTrailingSlash = (s: string) => s.replace(/\/+$/, '');
+
 function defaultBaseUrl(): string {
-  const fromConfig = (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl;
-  if (fromConfig) return fromConfig.replace(/\/$/, '');
-  // Dev defaults: Android emulator → 10.0.2.2; iOS sim / web → localhost.
+  // Guard against a non-string apiUrl (the build pipeline can serialize a null `extra.apiUrl`
+  // as `{}`); only honor a real string. On web, prefer the page's own origin host.
+  const fromConfig = (Constants.expoConfig?.extra as { apiUrl?: unknown } | undefined)?.apiUrl;
+  if (typeof fromConfig === 'string' && fromConfig.length > 0) return stripTrailingSlash(fromConfig);
+
+  if (Platform.OS === 'web') {
+    // Same host the app is served from (so a phone hitting the dev web server reaches the API too),
+    // on the backend port. SSR-safe guard for `location`.
+    const host =
+      typeof globalThis !== 'undefined' && (globalThis as any).location?.hostname
+        ? (globalThis as any).location.hostname
+        : 'localhost';
+    return `http://${host}:4000`;
+  }
+  // Native dev defaults: Android emulator → 10.0.2.2; iOS sim → localhost.
   const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
   return `http://${host}:4000`;
 }
 
-let baseUrl = defaultBaseUrl();
+let baseUrl = safeDefault();
+function safeDefault(): string {
+  try {
+    return defaultBaseUrl();
+  } catch {
+    return 'http://localhost:4000';
+  }
+}
 export const setBaseUrl = (url: string) => {
-  baseUrl = url.replace(/\/$/, '');
+  baseUrl = stripTrailingSlash(String(url));
 };
 export const getBaseUrl = () => baseUrl;
 
