@@ -118,6 +118,49 @@ enum EntitlementKind {
   artifact
 }
 
+enum TrialGoalKind {
+  breakthrough // deadline-bound campaign toward a named goal
+  open_path // rolling maintenance block (no taper, auto-chains)
+}
+
+enum TrialExperience {
+  novice
+  practiced
+  seasoned
+}
+
+enum TrialStatus {
+  active
+  completed
+  abandoned
+}
+
+enum PlannedKind {
+  flow // easy session
+  surge // quality/intensity session
+  pillar // the anchor-day long session
+  gate // boss/assessment session
+  stillness // recovery — targetReps 0, never strikes
+}
+
+enum RealignmentKind {
+  ease
+  intensify
+  realign_missed
+}
+
+enum RealignmentStatus {
+  proposed
+  accepted
+  dismissed
+}
+
+enum SagaStatus {
+  active
+  completed
+  archived
+}
+
 // ─────────────────────────────────────────────────────────────── core
 
 model Practitioner {
@@ -162,6 +205,12 @@ model Practitioner {
   strikes          StrikeEvent[]
   leaks            KiLeak[]
   vows             Vow[]
+  trials           Trial[]
+  plannedSessions  PlannedSession[]
+  realignments     TrialRealignment[]
+  soulProfile      SoulProfile?
+  sagas            Saga[]
+  sagaChapters     SagaChapter[]
   cosmetics        PractitionerCosmetic[]
   presets          ManifestationPreset[]
   forms            PractitionerForm[]
@@ -215,6 +264,8 @@ model VoidSession {
   // client-supplied id for idempotent offline flush
   clientId       String?
 
+  fulfillsPlanned PlannedSession?
+
   @@unique([practitionerId, clientId])
   @@index([practitionerId, occurredOn])
 }
@@ -249,6 +300,7 @@ model Vow {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   progressions   Progression[]
+  trial          Trial?
 
   @@index([practitionerId, status])
 }
@@ -262,6 +314,150 @@ model Progression {
   orderIndex Int     @default(0)
 
   @@index([vowId, orderIndex])
+}
+
+// ─────────────────────────────────────────────────────────────── trials (forged paths)
+
+/// A sworn training campaign (the Runna-style goal→plan engine, void-skinned).
+/// Weeks, phases, and adherence are NEVER stored — derived from startDate + the deterministic
+/// generator params via lib/protocol.ts, mirroring the never-store-realm philosophy.
+/// Progression ⇒ FREE: no priceModel here, ever (invariant #15).
+model Trial {
+  id               String          @id @default(cuid())
+  practitionerId   String
+  practitioner     Practitioner    @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  title            String
+  goalKind         TrialGoalKind
+  goalLabel        String? // free-text target ("Crest the Iron Mile")
+  focusModality    Modality
+  experience       TrialExperience
+  ability          Json // onboarding probe: { baselineReps: number }
+  sessionsPerWeek  Int // 2..7
+  pillarDay        Int // 0..6 (0 = Monday) — the long-session day
+  volumeDial       Int // 1..5
+  difficultyDial   Int // 1..5
+  totalWeeks       Int // 6..26
+  startDate        DateTime // Monday-aligned UTC midnight
+  targetDate       DateTime? // breakthrough date; null for open_path
+  status           TrialStatus     @default(active)
+  generatorVersion Int             @default(1) // audit: which protocol.ts produced the rows
+  vowId            String?         @unique // auto-created linked MAJOR Vow (vowSubtype "trial")
+  vow              Vow?            @relation(fields: [vowId], references: [id], onDelete: SetNull)
+  chainedFromId    String? // previous trial in the long-term chain (never a dead end)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  plannedSessions PlannedSession[]
+  realignments    TrialRealignment[]
+
+  @@index([practitionerId, status])
+}
+
+/// A quest in the System Window. Completion is ONLY a link to a real VoidSession —
+/// a PlannedSession can never strike by itself (invariants #2/#3/#12 untouched).
+model PlannedSession {
+  id                   String       @id @default(cuid())
+  trialId              String
+  trial                Trial        @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  practitionerId       String
+  practitioner         Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  scheduledOn          DateTime // UTC midnight — single source of "when"; move = update this
+  kind                 PlannedKind
+  modality             Modality
+  targetReps           Int // 0 for stillness (reps:0 ⇒ never strikes)
+  title                String // generated flavor ("Gate of the Third Floor")
+  fulfilledBySessionId String?      @unique
+  fulfilledBy          VoidSession? @relation(fields: [fulfilledBySessionId], references: [id], onDelete: SetNull)
+  fulfilledAt          DateTime?
+  createdAt            DateTime     @default(now())
+
+  @@index([practitionerId, scheduledOn])
+  @@index([trialId, scheduledOn])
+}
+
+/// Suggest-only adaptation (the Meridian Reading). NEVER auto-applied — accept/dismiss is a
+/// user act, and accept is the only path from suggestion to plan change (invariant #14).
+model TrialRealignment {
+  id             String            @id @default(cuid())
+  trialId        String
+  trial          Trial             @relation(fields: [trialId], references: [id], onDelete: Cascade)
+  practitionerId String
+  practitioner   Practitioner      @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  kind           RealignmentKind
+  reason         String // data-grounded sentence shown to the user
+  payload        Json // concrete deltas applied on accept (e.g. { volumeDelta: -1 })
+  status         RealignmentStatus @default(proposed)
+  createdAt      DateTime          @default(now())
+  resolvedAt     DateTime?
+
+  @@index([trialId, status])
+}
+
+// ─────────────────────────────────────────────────────────────── saga (the chronicle)
+
+/// WOOP/MCII identity record from the Mirror Rite: current self → higher self → inner
+/// obstacle → if-then ward. The obstacle taxonomy IS the KiLeak category set; the entity
+/// IS the rendered higher self.
+model SoulProfile {
+  id               String       @id @default(cuid())
+  practitionerId   String       @unique
+  practitioner     Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  currentSelf      String // who stands here now
+  higherSelf       String // the wish / future self the entity embodies
+  outcome          String // best imagined outcome
+  obstacleCategory LeakCategory // the Inner Demon's nature
+  obstacleName     String // the named demon ("The Hollow Scroll")
+  obstacleDetail   String // when/how it stirs
+  wardPlan         String // if-then implementation intention
+  styleKey         String? // chosen arc style ("murim" | "isekai" | "tower" | "regression")
+  updatedAt        DateTime     @updatedAt
+}
+
+/// A purpose arc. Structure (beats/triggers) is deterministic and authored; only flavor
+/// (title/synopsis/teases/prose) is AI. Progression ⇒ FREE forever (invariant #15).
+model Saga {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  styleKey       String
+  title          String
+  synopsis       String
+  demonName      String // antagonist = the named inner obstacle
+  status         SagaStatus   @default(active)
+  spec           Json // merged skeleton: [{ beatKey, trigger, optional }] — never AI-mutated
+  promptHash     String // forge cache key (voice.ts pattern)
+  source         String       @default("claude") // "claude" | "fallback"
+  trialId        String? // bound trial that paces the arc
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  chapters SagaChapter[]
+
+  @@index([practitionerId, status])
+}
+
+/// Chapters unlock ONLY from real logged events — unlockedBy is the audit (invariant #13).
+/// Locked = unlockedAt null; the tease is visible while locked (Zeigarnik pull).
+model SagaChapter {
+  id             String       @id @default(cuid())
+  sagaId         String
+  saga           Saga         @relation(fields: [sagaId], references: [id], onDelete: Cascade)
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  index          Int
+  beatKey        String // "awakening" | "system_window" | "first_gate" | ...
+  title          String
+  tease          String // visible while locked
+  prose          String? // written at unlock, grounded in the unlocking event
+  proseSource    String? // "claude" | "fallback"
+  promptHash     String?
+  trigger        Json // TriggerSpec (denormalized from spec for the engine)
+  optional       Boolean      @default(false) // e.g. the Regression beat may never fire
+  unlockedAt     DateTime?
+  unlockedBy     Json? // { kind: "gate_fulfilled", sessionId, ... } — real-event audit
+
+  @@unique([sagaId, index])
+  @@index([practitionerId, unlockedAt])
 }
 
 // ─────────────────────────────────────────────────────────────── entity / customization catalogs
