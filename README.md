@@ -40,15 +40,17 @@ Your real-world training is the only fuel. Every strike, sealed ki point, and ke
 7. [Companions, Lineages & Premium Systems](#companions-lineages--premium-systems)
 8. [The Soul Escrow System](#the-soul-escrow-system)
 9. [The Voice of the Void — AI Coach](#the-voice-of-the-void--ai-coach)
-10. [Rendering & Feel](#rendering--feel)
-11. [System Hardening](#system-hardening)
-12. [Greenfield Stack & Project Layout](#greenfield-stack--project-layout)
-13. [Getting Started From Zero](#getting-started-from-zero)
-14. [Data Model](#data-model)
-15. [API Surface](#api-surface)
-16. [Monetization](#monetization)
-17. [Build Roadmap](#build-roadmap)
-18. [Invariants & Pitfalls](#invariants--pitfalls)
+10. [Trials — the Forged Path](#trials--the-forged-path)
+11. [Saga — the Chronicle](#saga--the-chronicle)
+12. [Rendering & Feel](#rendering--feel)
+13. [System Hardening](#system-hardening)
+14. [Greenfield Stack & Project Layout](#greenfield-stack--project-layout)
+15. [Getting Started From Zero](#getting-started-from-zero)
+16. [Data Model](#data-model)
+17. [API Surface](#api-surface)
+18. [Monetization](#monetization)
+19. [Build Roadmap](#build-roadmap)
+20. [Invariants & Pitfalls](#invariants--pitfalls)
 
 ---
 
@@ -248,7 +250,40 @@ Built on the commitment-contract model (real money against a goal raises follow-
 
 The AI coach (Anthropic Claude) is **voiced through the entity**, not a faceless chat box. It appears at **rebirth/ascension** (a reflection on what you did to arrive), on the **daily return** (a read of recent streaks, leak patterns, upcoming deadlines), and **on request** (the Oracle ritual: 30-day analysis → custom protocol).
 
-*Server route `/coach/reflect`* composes recent metrics, streaks, leaks, and active vows into a structured prompt and calls Claude; the response renders in the entity's voice. It is **advisory and supportive — never punitive, never diagnostic, never inventing data it wasn't given.** Rate-limited and cached.
+*Server route `/coach/reflect`* composes recent metrics, streaks, leaks, active vows, **and the sworn trial (phase, week, adherence)** into a structured prompt and calls Claude; the response renders in the entity's voice. It is **advisory and supportive — never punitive, never diagnostic, never inventing data it wasn't given.** Rate-limited and cached. Occasions: `rebirth · ascension · return · oracle · gate · realign · chapter`.
+
+---
+
+## Trials — the Forged Path
+
+> *A goal becomes a path: weeks, quests, gates — generated around your life, fulfilled only by real training.*
+
+The Runna-style goal engine, void-skinned. A **Trial** is sworn from a goal: a **Breakthrough Trial** (deadline-bound) or **the Open Path** (rolling maintenance). The wizard collects discipline, experience, a baseline ("a comfortable session today, in reps"), sessions-per-week (2–6), the **Pillar Day** (the long session the week is arranged around), two dials (**Volume** 1–5, **Difficulty** 1–5), and 4–26 weeks. The server's deterministic generator (`lib/protocol.ts` — pure, unit-tested, no RNG) lays the whole path:
+
+- **Phases:** **The Gathering** (base volume builds gently) → **The Tribulation** (the key block; intensity ramps weekly, every 4th week deloads) → **The Quieting** (taper: volume falls to 45–55% of peak, the edge stays). Open Path trials never taper — they renew.
+- **Weekly shape:** 1 **Pillar** on the Pillar Day · 1–2 **Surges** (quality) · **Flow** fills · one **Stillness** (recovery, `targetReps: 0` — never counted, never strikes). **Gates** are assessments that *replace* slots: the last Gathering week, every 4th Tribulation week, and — for breakthroughs — the final **Breakthrough Gate**.
+- **Quest fulfillment is a LINK, never a strike.** Completing a quest IS logging a real `VoidSession` (`plannedSessionId` rides the normal session payload, or auto-matches by UTC day + modality). Stillness quests pair only with `reps: 0`. Deleting a session un-fulfills its quest automatically (`onDelete: SetNull`).
+- **Weeks, phases, and adherence are never stored** — derived from `startDate` + the generator params, exactly like realm-from-hammerCount.
+- **Realignment (the Meridian Reading) is suggest-only.** The analyzer (`lib/adherence.ts`, pure) reads real weeks and may *propose*: ease after two sub-50% weeks, intensify after two perfect well-rated weeks, re-lay a slipped week, or an eased re-entry after a ≥7-day silence. **Nothing changes until the practitioner accepts** — and accept rewrites only future, unfulfilled quests.
+- **Never a dead end:** completing a trial keeps its auto-linked **major Vow** (Trophy + flourish), fires the saga, and chains an Open Path follow-up. Abandoning cancels the vow — never breaks it (re-planning is not corruption).
+- Preference changes **regenerate from next week**; quests move within their week or one adjacent, never into the past.
+
+The Calendar space is the **Quest Log**: phase banner, 7-day quest strip, in-place day panel, the Realignment banner, and the Binding Vows beneath. The Domain surfaces **Today's Quest**.
+
+---
+
+## Saga — the Chronicle
+
+> *Instead of a to-do list, a story — but the story only ever follows the facts.*
+
+The Yugen-style purpose arc, grounded in real psychology and manhwa/isekai structure. The **Mirror Rite** (onboarding, repeatable from the Chronicle) walks WOOP/MCII: *who stands here now* (current self) → *who the Void shows you* (higher self + best outcome — **the entity IS this future self**) → **Name your Inner Demon** (the obstacle; its nature is the KiLeak taxonomy — social/food/media/argument/validation/doubt) → **Forge the Ward** (an if-then implementation intention) → choose a telling. Mental contrasting is deliberate: pure positive fantasy demonstrably *reduces* attainment; naming the obstacle is what makes the wish work.
+
+- **The Saga Forge** (`POST /saga/forge`) writes a personalized arc in one of four styles — **Murim Cultivation**, **Isekai Rebirth**, **The Tower**, **The Returnee** — with the named demon as antagonist. **AI writes flavor, never structure:** a deterministic authored 10-beat skeleton (`lib/sagaBeats.ts`) is force-merged server-side over whatever the model returns (strict Zod), and authored fallback templates (`lib/sagaTemplates.ts`) make the whole system work keyless/offline. Reforge anytime — the old saga archives, additive-only.
+- **The ten beats**, each triggered by a REAL logged event: Awakening (forged) · System Window (trial sworn) · First Gate (first quest fulfilled) · Tower Floor (Tribulation entered) · Hidden Master (streak 7) · Tribulation Gate (first Gate cleared) · Regression (*optional* — a return after ≥7 silent days) · Final Ascent (Quieting entered) · Breakthrough (trial kept OR realm crossed) · The Next Path (vow kept).
+- **Chapters unlock ONLY from logged events** — `unlockedBy` records the exact event (the audit). Locked chapters show a tease, never prose (Zeigarnik). Fallback prose is written *in the same transaction* as the unlocking event; Claude lazily refines it later (promptHash-cached, rate-limited), grounded in the stored event.
+- The Trophy Hall is reworked as **The Chronicle**: the saga header, chapter cards (manhwa episode style; the next chapter highlighted), **Turning Points** (realm crossings, trial weeks, kept vows), and the old hall folded in as **Monuments** (Ascension shrines, Trophies, Records). Route unchanged (`/trophy-hall`).
+
+**Trials and Sagas are progression ⇒ free forever.** No priceModel exists on any of their models; nothing narrative or structural is ever sold or randomized.
 
 ---
 
@@ -379,6 +414,10 @@ Realm and evolution **stage are never stored**; `hammerCount` is reconcilable fr
 
 **Spaces & premium:** `DomainPack` / `PractitionerDomain` · `SpaceDecor` / `PractitionerDecor` · `Bloodline` / `PractitionerBloodline` · `Companion` / `CompanionSummon` (server-side pull history) / `PractitionerCompanion` · `WagerEvent`.
 
+**Trials (free forever — no priceModel):** `Trial` (goalKind breakthrough/open_path, focusModality, experience, ability JSON, sessionsPerWeek, pillarDay, volumeDial, difficultyDial, totalWeeks, startDate Monday-UTC, targetDate?, status, generatorVersion, **vowId? @unique** → auto-linked major Vow `vowSubtype:'trial'`, chainedFromId — **weeks/phases/adherence never stored, always derived**) · `PlannedSession` (scheduledOn UTC-midnight, kind flow/surge/pillar/gate/stillness, modality, targetReps — 0 for stillness, title, **fulfilledBySessionId? @unique → VoidSession, onDelete SetNull** — completion is a link, never a strike) · `TrialRealignment` (kind ease/intensify/realign_missed, reason, payload JSON, status proposed/accepted/dismissed — suggest-only).
+
+**Saga (free forever):** `SoulProfile` (currentSelf, higherSelf, outcome, **obstacleCategory: LeakCategory**, obstacleName, obstacleDetail, wardPlan, styleKey?) · `Saga` (styleKey, title, synopsis, demonName, status, **spec JSON = authored beat skeleton, never AI-mutated**, promptHash, source claude/fallback, trialId?) · `SagaChapter` (index, beatKey, title, tease, prose? written at unlock, trigger JSON, optional, unlockedAt?, **unlockedBy JSON — the real-event audit**).
+
 **Systems:** `Bond` (value, lastPresenceDate) · `Season` (seasonKey, startsAt, endsAt — limited-time drops) · `Sect` / `SectMember` (social roadmap).
 
 ---
@@ -393,7 +432,9 @@ Bearer JWT unless noted. **No `/api/` prefix** — routes mount directly.
 - **Entity & forms:** `GET /entity/forms` · `GET /entity/me` (computed stage) · `POST /entity/form`
 - **Spaces & cosmetics:** `GET /spaces` · `POST /spaces/activate` · `GET /cosmetics` (`?category=`) · `GET /cosmetics/owned` · `POST /cosmetics/equip` · `/unequip` · `GET|POST /manifestation-presets` · `PUT|DELETE /…/:id` · `POST /…/:id/activate`
 - **Companions:** `GET /companions` · `POST /companions/summon` (server RNG + pity) · `POST /companions/activate`
-- **Coach & sync:** `POST /coach/reflect` (rate-limited, cached) · `POST /sync/flush` (offline queue; last-write-wins; StrikeEvent append-only) · `GET /sync/state`
+- **Trials:** `GET|POST /trials` · `GET /trials/active` · `POST /trials/:id/regenerate` (future-unfulfilled only) · `POST /trials/:id/sessions/:psId/move` · `POST /trials/:id/complete` (chains the Open Path) · `DELETE /trials/:id` (vow cancelled, never broken) · `POST /trials/:id/realignments/check|:rid/accept|:rid/dismiss` (accept is the ONLY suggestion→plan path)
+- **Saga:** `GET /saga/styles` · `PUT /saga/profile` (absolute-set, offline-replayable) · `POST /saga/forge` (online-only; keyless fallback) · `GET /saga/state` (locked = tease only; lazy Claude prose refinement) · `GET /saga/chapters/:id`
+- **Coach & sync:** `POST /coach/reflect` (rate-limited, cached) · `POST /sync/flush` (offline queue; last-write-wins; StrikeEvent append-only; session mutations carry `plannedSessionId?`; `plan_move` + `soul_profile` are absolute-set) · `GET /sync/state` (includes the FULL active trial + saga so the Quest Log and Chronicle render offline)
 - **Premium & admin:** `POST /premium/reconcile` (RevenueCat webhook → grants) · `GET /admin/*` · `POST /admin/recompute-hammer/:id`
 
 ---
@@ -433,6 +474,12 @@ Ship the cheap, high-impact thing first. Each phase ships independently.
 | **4 — Customization economy** | Full cosmetic layer system + recolor + presets; Void Crystals; RevenueCat entitlements; `/cosmetics/*`, `/premium/reconcile`; decor. | Equip/recolor/save persists + syncs; first paid cosmetic restorable. |
 | **5 — True 3D + companions + Soul Escrow** | R3F 3D Dojo/Calendar/Hall + Domain Packs; Companions gacha (disclosed rates, server pity); Soul Escrow (Stripe); Lineages/Auras/Artifacts. | 3D loads <5MB at frame/battery target, degrades to 2.5D; gacha compliant. |
 | **6 — Premium forms & social** | Beast + Humanoid form lines (fully staged); Void Seasons; visiting, Sects, decor gifting. | Forms purchasable/restorable; first social loop live. |
+| **T1 — Trials schema + protocol core** | `Trial`/`PlannedSession`/`TrialRealignment` (+ saga models); deterministic generator `lib/protocol.ts` + tests. | Fresh-DB migration applies; generator tests green (determinism, 40–60% taper, phase splits, pillar day). |
+| **T2 — Trials server** | `/trials` router; `logSession` fulfillment hook; `/sync` extensions; auto-linked trial-vow; seed demo trial. | Stillness quest @ `reps:0` ⇒ fulfilled, **no StrikeEvent, hammer unchanged**; flush replay idempotent; `recompute-hammer` drift 0. |
+| **T3 — Adaptation** | `lib/adherence.ts` analyzer + realignment endpoints (suggest-only). | Missed week ⇒ grounded proposal; accept rewrites future-unfulfilled only; dismiss is a no-op. |
+| **T4 — Saga server** | SoulProfile; beats/templates/forge/engine; `/saga` router; coach occasions; cinematics; seed demo saga. | **Keyless** forge yields a valid fallback arc; chapters unlock in order from real events with `unlockedBy` audit; locked teases carry no prose. |
+| **T5 — Client loop** | trial/saga stores (persisted); Quest Log calendar; Today's Quest; QuickLog prefill; chapter watcher. | Demo shows Today's Quest; complete+move offline → relaunch renders from cache → reconnect flushes without dupes; reduce-motion shortens `chapter_unlock`. |
+| **T6 — Mirror Rite + Chronicle + docs** | WOOP onboarding steps in rebirth; `SagaOnboardingSheet`/`TrialWizardSheet`; Chronicle rework; docs. | Fresh signup walks the rite → forged saga visible in the Chronicle; demo shows mid-arc + next-chapter tease; depth ≤ 1 audit. |
 
 **Top risks:** art cost (Form × 7 stages) → ship one fully-staged form first, fund the rest from revenue; 3D on low-end Android → DRACO + baked light + on-demand + 2.5D fallback; scope for a solo dev → the phasing lets you stop after Phase 3 with a genuinely differentiated game.
 
@@ -448,6 +495,10 @@ Ship the cheap, high-impact thing first. Each phase ships independently.
 6. **Cosmetics, forms, spaces = direct purchases, never gacha.** Companions are the only RNG (disclosed rates + server pity). **Additive-only** releases.
 7. **No `/api/` prefix.** Bearer JWT. `reps:0` ⇒ no strike. `10.0.2.2` for Android emulator. `JWT_SECRET` required before boot.
 8. **Native modules ⇒ dev build.** Verify the Rive + R3F + Reanimated version matrix on your SDK before locking. On SDK 55+ the New Architecture is mandatory.
+9. **PlannedSessions never strike.** Completing a quest IS logging a real `VoidSession`; the `fulfilledBySessionId` link is the only completion mechanism. Stillness quests pair only with `reps:0`. UTC days are the week-boundary convention end-to-end (the client mirrors the server's `dayDiff`).
+10. **Saga chapters unlock ONLY from real logged events** (`unlockedBy` is the audit). AI writes flavor — titles, teases, prose — never structure or history; the authored beat skeleton is force-merged server-side and keyless fallbacks exist at every AI seam.
+11. **Adaptation is suggest-only.** A Realignment changes nothing until the practitioner accepts; accept rewrites only future, unfulfilled quests. The past is immutable.
+12. **Trials and Sagas are progression ⇒ free forever.** No priceModel on any of their models, nothing gacha, additive-only (reforging archives, never deletes).
 
 ---
 

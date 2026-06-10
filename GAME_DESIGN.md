@@ -66,11 +66,11 @@ A flat hub of four spaces. **One level deep.** Expo Router file-based routes map
 
 | Space | Route | PoGo DNA | CR DNA | What happens |
 |---|---|---|---|---|
-| **Domain** | `app/index.tsx` | the creature lives here; identity center | the central hub on one subject | entity reacts to live metrics; quick-log actions; ascension fires here |
-| **Calendar** | `app/calendar.tsx` | — | one-level screen, swipe-reachable | Binding Vows on a timeline with live countdowns |
-| **Trophy Hall** | `app/trophy-hall.tsx` | collection-as-pride | clean monument screen | completed vows/ascensions/streaks as rendered trophies |
+| **Domain** | `app/index.tsx` | the creature lives here; identity center | the central hub on one subject | entity reacts to live metrics; **Today's Quest**; quick-log actions; ascension fires here |
+| **Quest Log** (Calendar) | `app/calendar.tsx` | — | one-level screen, swipe-reachable | the sworn Trial's phase banner + weekly quest strip + Realignment consent; Binding Vows beneath with live countdowns |
+| **The Chronicle** (Trophy Hall) | `app/trophy-hall.tsx` | collection-as-pride | clean monument screen | the saga's chapters as manhwa episode cards + Turning Points; Ascensions/Trophies/Records fold in as Monuments |
 | **Manifestation** | `app/chamber.tsx` | the customization engine | preview + commit, no deep menus | choose form, swap/recolor layers, save presets, Unseal items |
-| **Rebirth** | `app/(rebirth)/` | the creature is *born* | full-screen set-piece | onboarding + the rebirth cinematic |
+| **Rebirth** | `app/(rebirth)/` | the creature is *born* | full-screen set-piece | onboarding: the **Mirror Rite** (WOOP identity steps) → trial wizard → the rebirth cinematic |
 
 **Rule:** opening a space, acting, and returning is one tap each way. If a flow seems to need a second level (e.g., a cosmetic's color options), it renders *in place* (a sheet/inline panel), never a new screen stack — the Clash Royale "disguise depth as one level" principle.
 
@@ -132,23 +132,32 @@ The Clash Royale magic is 80% feel. Make it a checklist, not an afterthought:
 ## 8. The loop, end to end
 
 ```
-  TRAIN (real world)
-      │  log session (reps>0) ──► StrikeEvent ──► hammerCount ▲
+  SWEAR A TRIAL (goal → generated path: Gathering → Tribulation → Quieting)
+      │  the System Window opens: weekly quests laid around your Pillar Day
+      ▼
+  TRAIN (real world) ──► TODAY'S QUEST fulfilled by a REAL session
+      │  log session (reps>0) ──► StrikeEvent ──► hammerCount ▲   (the link never strikes)
       ▼
   THE DOMAIN  ◄── entity reacts live (ki, shadow, streak, glow)
-      │  cross a realm threshold
+      │  cross a realm threshold · clear a Gate · enter a phase · keep the streak
       ▼
   ASCENSION set-piece ──► entity evolves a stage + space matures
+  CHAPTER UNLOCK ──► the Chronicle turns a page (story follows fact, never precedes it)
       │
-      ├─► CALENDAR: keep a vow ──► Trophy + one-time evolution flourish
+      ├─► QUEST LOG: move/complete quests; accept or dismiss a Realignment (suggest-only)
+      ├─► THE CHRONICLE: read the saga; trophies + turning points beneath
       ├─► CHAMBER: mold form / swap look (identity, optional spend)
       └─► VOICE OF THE VOID: the entity reflects your pattern back (Claude)
       │
       ▼
-  RETURN TOMORROW  ◄── Bond deepens; neglect ⇒ Dormant (gentle nudge)
+  RETURN TOMORROW  ◄── Bond deepens; neglect ⇒ Dormant (gentle nudge);
+                        a return after silence is the REGRESSION beat, never a punishment
+      │  the trial completes ──► Breakthrough Gate ──► vow kept ──► the Open Path chains
+      ▼
+  NEVER A DEAD END
 ```
 
-The only input is showing up. Everything purchasable is identity and environment — never the climb.
+The only input is showing up. Everything purchasable is identity and environment — never the climb, never the plan, never the story.
 
 ---
 
@@ -161,3 +170,33 @@ The only input is showing up. Everything purchasable is identity and environment
 - **Identity is the product** — forms, spaces, cosmetics; the climb is free.
 - **Feel is a feature** — juice and reduce-motion are both requirements.
 - **The space and the creature share a place** — that shared place is the whole idea.
+- **Story follows fact** — chapters unlock only from logged events; the Chronicle can never be read ahead of the work, and the AI may flavor the myth but never invent the history.
+- **Suggest, never impose** — the plan adapts only by consent (Realignments are proposals); a missed week is met with a re-laid path, not a penalty.
+
+---
+
+## 10. The two engines (Runna × Yugen, made VOIDBORN)
+
+The fusion gains a second axis: **structure** (how training is laid out) and **meaning** (why it matters), borrowed from the two best-in-class apps for each and skinned in the world VOIDBORN already is.
+
+### The Trial engine (modeled on Runna's goal-based plans)
+| Runna | VOIDBORN |
+|---|---|
+| Race distance + date, or a general target | **Breakthrough Trial** (deadline) / **the Open Path** (maintenance) |
+| Base → key block → taper | **The Gathering → the Tribulation → the Quieting** (taper = 45–55% of peak volume, derived, never stored) |
+| Long-run anchor day; week auto-arranged | **Pillar Day**; flows/surges/stillness laid around it by the deterministic generator |
+| Easy / quality / long run / assessment | **Flow / Surge / Pillar / Gate** (+ **Stillness**, reps:0 — recovery counts as kept, never as struck) |
+| Volume & difficulty preferences regenerate the plan | Two dials; regeneration touches **future, unfulfilled weeks only** |
+| Pace Insights suggest; the runner accepts | **The Meridian Reading** — Realignments are suggest-only; accept is the only mutation |
+| Post-race plans; goals chain | Completing a trial keeps its major Vow and **auto-chains the Open Path** — never a dead end |
+
+### The Saga engine (modeled on Yugen's story arcs, corrected by the research)
+| Yugen | VOIDBORN (and why it's stronger) |
+|---|---|
+| Tell it your goals → a personal story arc | **The Mirror Rite** — full WOOP/MCII: current self → higher self → **a NAMED inner obstacle** → an if-then **Ward**. Pure positive fantasy measurably *reduces* attainment; the contrast step is the fix. |
+| 20+ authored arcs with vibes and milestones | **4 manhwa/isekai styles** (Murim, Isekai, Tower, Returnee) × AI personalization over ONE authored 10-beat skeleton — infinite flavor, fixed honest structure |
+| Daily tasks become chapters | Chapters unlock **only from real logged events** (`unlockedBy` audit) — quests fulfilled, gates cleared, phases entered, realms crossed, streaks kept, returns after silence |
+| Skill levels unlock new paths | Realms, streaks, and kept trials ARE the unlock conditions — no parallel XP |
+| Online-only | Offline-first: authored fallback arcs + in-transaction fallback prose; Claude refines lazily when reachable |
+
+The psychology is load-bearing, not garnish: the **Inner Demon's nature is the KiLeak taxonomy** (the obstacle you log is the antagonist you fight), **the entity is the rendered higher self** (future-self vividness), and the Tribulation reframes difficulty as **importance** (identity-based motivation) — which is also, exactly, the manhwa trope.

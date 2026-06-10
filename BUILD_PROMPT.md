@@ -79,4 +79,44 @@ You are building **VOIDBORN** from zero: a single-player ascension game that fus
 
 ---
 
+# The Two Engines — Trials (Runna-modeled) + Saga (Yugen/WOOP-modeled)
+
+> Invariants 12–15 in `CLAUDE.md` govern everything below. The mantra: **quests are fulfilled only by
+> real sessions; story follows fact; adaptation is by consent; progression stays free.**
+
+## PHASE T1 — Trials schema + the protocol core
+- Schema: `Trial` / `PlannedSession` / `TrialRealignment` (+ `SoulProfile` / `Saga` / `SagaChapter` for T4) — weeks/phases/adherence **derived, never stored**; `PlannedSession.fulfilledBySessionId → VoidSession` with `onDelete: SetNull`.
+- `server/src/lib/protocol.ts` — PURE deterministic generator: `phasePlanFor` (Gathering → Tribulation → Quieting), `generateProtocol` (week laid around the **Pillar Day**: pillar/surge/flow + one stillness; Gates as replaced slots; every 4th Tribulation week deloads; Quieting holds 45–55% of peak), `regenerateFrom`, `canMove`, UTC-Monday helpers.
+- **Gate:** migration applies on a fresh DB; generator unit tests green (determinism, phase splits at 6/10/26 weeks, taper bounds, pillar-day placement, stillness `targetReps: 0`, regen never emits past weeks).
+
+## PHASE T2 — Trials server
+- `/trials` router: create (rejects a second active trial; generates the plan; **auto-creates the linked major Vow** `vowSubtype:'trial'`), `GET /active`, regenerate (**future-unfulfilled rows only**), move (same/adjacent week, never the past), complete (**keeps the vow + chains an Open Path** — never a dead end), abandon (vow `cancelled`, never `broken`).
+- `lib/sessionLog.ts` hook: explicit `plannedSessionId` or auto-match (UTC day + modality; stillness ⇔ `reps:0` only; gate > pillar > surge > flow) — **the link is the only completion mechanism and never strikes**.
+- `/sync`: session mutations carry `plannedSessionId?`; new `plan_move` + `soul_profile` absolute-set mutations; `/sync/state` ships the FULL active trial.
+- **Gate (curl):** stillness quest @ `reps:0` ⇒ fulfilled, **no `StrikeEvent`, hammer unchanged**; flush replay idempotent (no double-fulfill); `/admin/recompute-hammer` drift 0.
+
+## PHASE T3 — Adaptation (suggest-only)
+- `lib/adherence.ts` — PURE: `summarizeWeeks` + `proposeRealignments` (ease after two <50% weeks; intensify after two perfect, well-rated weeks; re-lay a slipped week; eased re-entry after a ≥7-day silence).
+- Realignment endpoints: `check` (≤1 new proposal/day) · `accept` (**the only suggestion→plan path**; future-unfulfilled regen) · `dismiss`.
+- **Gate:** a seeded missed week yields a data-grounded proposal; accept rewrites only the future; dismiss is a no-op; unit tests green.
+
+## PHASE T4 — Saga server (the Chronicle's engine)
+- `SoulProfile` (Mirror Rite record: current self / higher self / outcome / **Inner Demon** = `LeakCategory` / **Ward** if-then / style).
+- `lib/sagaBeats.ts` — the authored **10-beat skeleton** (awakening → … → next_path; regression optional) + `triggerMatches`; `lib/sagaTemplates.ts` — 4 authored style arcs (murim/isekai/tower/regression), keyless floor; `lib/sagaForge.ts` — Claude flavors the arc, **skeleton force-merged server-side**, strict Zod, fallback at every seam; `lib/sagaEngine.ts` — `advanceSaga(tx, …)` unlocks chapters in-transaction from REAL events with `unlockedBy` audit + synchronous fallback prose (Claude refines lazily, promptHash-cached).
+- `/saga` router (`styles` / `profile` / `forge` / `state` / `chapters/:id`); coach occasions + trial context; 4 new cinematics; seed a demo trial mid-plan + saga mid-arc.
+- **Gate:** keyless forge returns a Zod-valid fallback arc; chapters unlock in beat order only from logged events; locked chapters expose teases, never prose.
+
+## PHASE T5 — Client loop (the System Window)
+- `store/trial.ts` + `store/saga.ts` (persisted — Quest Log + Chronicle render **offline**); `metrics.logStrike(+plannedSessionId)` optimistic fulfill; flush results surface `fulfilledPlanned` + `unlockedChapters`; `useChapterWatcher` plays `chapter_unlock`.
+- Calendar → **the Quest Log** (phase banner, 7-day strip, in-place day panel: Begin prefills the QuickLog, Move is canMove-constrained; the Realignment banner with Accept/Dismiss; vows preserved beneath). Domain gains **Today's Quest**.
+- **Gate:** demo shows Today's Quest; complete + move offline → relaunch renders from the persisted stores → reconnect flushes with no dupes; reduce-motion shortens `chapter_unlock`.
+
+## PHASE T6 — The Mirror Rite + The Chronicle + docs
+- Rebirth: signup → **Mirror Rite** (WOOP steps, every step skippable: "Walk on — shape it later") → trial wizard → the birth beat; both rites reusable as in-place sheets from the Chronicle / Quest Log.
+- Trophy Hall → **The Chronicle**: saga card, manhwa chapter cards (locked teases; next-chapter highlight; prose expands in place), Turning Points, and the old hall folded in as Monuments. `BottomBar` labels: Quest Log · Chronicle (routes unchanged).
+- Docs: README sections + data model + API + roadmap; GAME_DESIGN §10; CLAUDE invariants 12–15; STATUS rows.
+- **Gate:** fresh signup walks the rite → forged saga visible in the Chronicle; demo shows mid-arc + the next-chapter tease; depth ≤ 1 audit; `tsc --noEmit` both sides + all unit tests green.
+
+---
+
 When you finish reading the three documents, complete the "Before you start" items (including the toolchain-matrix verification) and begin **Phase 0**. Pause for review at each phase boundary.
