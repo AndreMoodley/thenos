@@ -12,6 +12,11 @@ const CINEMATICS = [
   { key: 'rebirth', kind: 'rive_oneshot', durationMs: 4200, reduceMotion: { durationMs: 900, mode: 'fade' }, haptic: 'heavy', stinger: 'rebirth' },
   { key: 'summon', kind: 'rive_oneshot', durationMs: 3000, reduceMotion: { durationMs: 700, mode: 'fade' }, haptic: 'success', stinger: 'summon' },
   { key: 'vow_flourish', kind: 'rive_oneshot', durationMs: 2200, reduceMotion: { durationMs: 500, mode: 'fade' }, haptic: 'success', stinger: 'vow' },
+  // trials & saga set-pieces
+  { key: 'trial_forged', kind: 'rive_oneshot', durationMs: 2600, reduceMotion: { durationMs: 600, mode: 'fade' }, haptic: 'success', stinger: 'vow' },
+  { key: 'gate_clear', kind: 'rive_oneshot', durationMs: 2400, reduceMotion: { durationMs: 600, mode: 'fade' }, haptic: 'success', stinger: 'strike' },
+  { key: 'chapter_unlock', kind: 'rive_oneshot', durationMs: 2400, reduceMotion: { durationMs: 600, mode: 'fade' }, haptic: 'success', stinger: 'vow' },
+  { key: 'breakthrough_trial', kind: 'rive_oneshot', durationMs: 5200, reduceMotion: { durationMs: 1100, mode: 'fade' }, haptic: 'heavy', stinger: 'ascension' },
   // one ascension set-piece per realm crossing (2..7)
   ...REALMS.filter((r) => r.index >= 2).map((r) => ({
     key: `ascension_${r.key}`,

@@ -1,6 +1,13 @@
 import './env.js';
 import bcrypt from 'bcryptjs';
+import type { Prisma } from '@prisma/client';
 import { prisma } from './lib/prisma.js';
+import { alignToMonday } from './lib/protocol.js';
+import { createTrialTx } from './lib/trialOps.js';
+import { realmForHammerCount } from './lib/realms.js';
+import { BEAT_SKELETON, type SagaEvent } from './lib/sagaBeats.js';
+import { templateChapterProse } from './lib/sagaTemplates.js';
+import { fallbackArc, forgePromptHash, type ForgeContext } from './lib/sagaForge.js';
 
 const FREE = { kind: 'free' as const };
 const iap = (productKey: string, priceUsd: number) => ({ kind: 'iap' as const, productKey, priceUsd });
@@ -123,24 +130,170 @@ async function seedDemo() {
   // Reset derived history so the seed is deterministic and hammerCount == sum(StrikeEvent).
   await prisma.strikeEvent.deleteMany({ where: { practitionerId: demo.id } });
   await prisma.voidSession.deleteMany({ where: { practitionerId: demo.id } });
+  await prisma.trialRealignment.deleteMany({ where: { practitionerId: demo.id } });
+  await prisma.plannedSession.deleteMany({ where: { practitionerId: demo.id } });
+  await prisma.trial.deleteMany({ where: { practitionerId: demo.id } });
+  await prisma.sagaChapter.deleteMany({ where: { practitionerId: demo.id } });
+  await prisma.saga.deleteMany({ where: { practitionerId: demo.id } });
+  await prisma.soulProfile.deleteMany({ where: { practitionerId: demo.id } });
   await prisma.vow.deleteMany({ where: { practitionerId: demo.id } });
   await prisma.kiLeak.deleteMany({ where: { practitionerId: demo.id } });
 
-  // Build a strike history that lands mid-progression (Realm 3 — Ki Establishment band).
-  const amounts = [400, 350, 500, 300, 450, 600, 380, 520, 700, 500, 600];
-  const total = amounts.reduce((s, a) => s + a, 0); // 5300
   const now = Date.now();
-  for (let i = 0; i < amounts.length; i++) {
-    const occurredAt = new Date(now - (amounts.length - i) * 24 * 60 * 60 * 1000);
+  const DAY = 24 * 60 * 60 * 1000;
+
+  // ── A sworn trial, three weeks deep. The plan comes from the REAL generator (seed and
+  // runtime can never diverge), and the linked major Vow is created exactly as at runtime.
+  const trialStart = alignToMonday(new Date(now - 21 * DAY));
+  const { trial } = await createTrialTx(
+    prisma,
+    demo.id,
+    {
+      title: 'Crest the Iron Mile',
+      goalKind: 'breakthrough',
+      goalLabel: 'Run the Iron Mile without stopping',
+      focusModality: 'cardio',
+      experience: 'practiced',
+      ability: { baselineReps: 300 },
+      sessionsPerWeek: 4,
+      pillarDay: 5,
+      volumeDial: 3,
+      difficultyDial: 3,
+      totalWeeks: 10,
+      startDate: trialStart,
+    },
+    new Date(now),
+  );
+
+  // Fulfill the first three weeks the only honest way: real sessions on the quest days,
+  // linked by fulfilledBySessionId. Links add NO strikes — hammerCount === Σ StrikeEvent.
+  const pastCounted = await prisma.plannedSession.findMany({
+    where: { trialId: trial.id, kind: { not: 'stillness' }, scheduledOn: { lt: new Date(now) } },
+    orderBy: { scheduledOn: 'asc' },
+    take: 12,
+  });
+  const amounts = [400, 350, 500, 300, 450, 600, 380, 520, 700, 500];
+  let total = 0;
+  let firstFulfilledQuestId: string | null = null;
+  let lastSessionAt = new Date(now - 21 * DAY);
+  for (let i = 0; i < Math.min(10, pastCounted.length); i++) {
+    const quest = pastCounted[i]!;
+    // Leave the two most recent past quests unfulfilled — slipped quests for the demo.
+    if (i >= Math.min(10, pastCounted.length) - 2) continue;
+    const occurredAt = quest.scheduledOn;
     const session = await prisma.voidSession.create({
-      data: { practitionerId: demo.id, modality: ['origin', 'pull', 'push', 'core', 'cardio'][i % 5] as any, reps: amounts[i]!, rating: 4, occurredOn: occurredAt },
+      data: { practitionerId: demo.id, modality: quest.modality, reps: amounts[i]!, rating: 4, occurredOn: occurredAt },
     });
     await prisma.strikeEvent.create({ data: { practitionerId: demo.id, amount: amounts[i]!, sessionId: session.id, occurredAt } });
+    await prisma.plannedSession.update({
+      where: { id: quest.id },
+      data: { fulfilledBySessionId: session.id, fulfilledAt: occurredAt },
+    });
+    total += amounts[i]!;
+    firstFulfilledQuestId ??= quest.id;
+    if (occurredAt > lastSessionAt) lastSessionAt = occurredAt;
   }
-  // A recovery (reps:0) session — must NOT strike (invariant #3).
-  await prisma.voidSession.create({ data: { practitionerId: demo.id, modality: 'recovery', reps: 0, note: 'Stillness', occurredOn: new Date(now) } });
+
+  // A recovery (reps:0) session fulfilling a Stillness quest — must NOT strike (invariants #3/#12).
+  const stillQuest = await prisma.plannedSession.findFirst({
+    where: { trialId: trial.id, kind: 'stillness', scheduledOn: { lt: new Date(now) }, fulfilledBySessionId: null },
+    orderBy: { scheduledOn: 'asc' },
+  });
+  const stillSession = await prisma.voidSession.create({
+    data: { practitionerId: demo.id, modality: 'recovery', reps: 0, note: 'Stillness', occurredOn: stillQuest?.scheduledOn ?? new Date(now) },
+  });
+  if (stillQuest) {
+    await prisma.plannedSession.update({
+      where: { id: stillQuest.id },
+      data: { fulfilledBySessionId: stillSession.id, fulfilledAt: stillQuest.scheduledOn },
+    });
+  }
+
+  // One proposed Realignment — suggest-only; the demo decides (invariant #14).
+  await prisma.trialRealignment.create({
+    data: {
+      practitionerId: demo.id,
+      trialId: trial.id,
+      kind: 'realign_missed',
+      reason: '2 quests slipped past this week. The remaining days can be re-laid around what is left.',
+      payload: { shiftRemaining: true },
+    },
+  });
 
   await prisma.kiLeak.create({ data: { practitionerId: demo.id, category: 'media', label: 'doomscroll', cost: 8 } });
+
+  // ── The Mirror Rite record + a saga three chapters deep (forged keyless via fallbackArc;
+  // every unlock carries the REAL event that caused it — invariant #13).
+  const profile = await prisma.soulProfile.create({
+    data: {
+      practitionerId: demo.id,
+      currentSelf: 'a tired scroller',
+      higherSelf: 'the unshakeable dawn-runner',
+      outcome: 'crossing the Iron Mile with breath to spare',
+      obstacleCategory: 'media',
+      obstacleName: 'The Hollow Scroll',
+      obstacleDetail: 'it stirs after 9pm, glowing softly',
+      wardPlan: 'If I reach for the feed after 9pm, I begin ten breaths instead',
+      styleKey: 'murim',
+    },
+  });
+  const forgeCtx: ForgeContext = {
+    name: 'Adept',
+    styleKey: 'murim',
+    profile,
+    trial: { title: trial.title, totalWeeks: trial.totalWeeks, focusModality: trial.focusModality, goalKind: trial.goalKind },
+    realmName: realmForHammerCount(total).realm.name,
+    skeleton: BEAT_SKELETON,
+  };
+  const spec = fallbackArc(forgeCtx);
+  const saga = await prisma.saga.create({
+    data: {
+      practitionerId: demo.id,
+      styleKey: 'murim',
+      title: spec.title,
+      synopsis: spec.synopsis,
+      demonName: spec.demonName,
+      spec: BEAT_SKELETON as unknown as Prisma.InputJsonValue,
+      promptHash: forgePromptHash(forgeCtx),
+      source: 'fallback',
+      trialId: trial.id,
+      chapters: {
+        create: BEAT_SKELETON.map((b, i) => ({
+          practitionerId: demo.id,
+          index: i + 1,
+          beatKey: b.beatKey,
+          title: spec.chapters[i]!.title,
+          tease: spec.chapters[i]!.tease,
+          trigger: b.trigger as unknown as Prisma.InputJsonValue,
+          optional: b.optional ?? false,
+        })),
+      },
+    },
+    include: { chapters: { orderBy: { index: 'asc' } } },
+  });
+  const unlockEvents: { index: number; ev: SagaEvent; at: Date }[] = [
+    { index: 1, ev: { kind: 'forged' }, at: trialStart },
+    { index: 2, ev: { kind: 'trial_started', trialId: trial.id }, at: trialStart },
+    ...(firstFulfilledQuestId
+      ? [{ index: 3, ev: { kind: 'planned_fulfilled', plannedSessionId: firstFulfilledQuestId, planKind: 'flow', nthFulfilled: 1 } as SagaEvent, at: new Date(trialStart.getTime() + 2 * DAY) }]
+      : []),
+  ];
+  for (const u of unlockEvents) {
+    const ch = saga.chapters.find((c) => c.index === u.index)!;
+    await prisma.sagaChapter.update({
+      where: { id: ch.id },
+      data: {
+        unlockedAt: u.at,
+        unlockedBy: u.ev as unknown as Prisma.InputJsonValue,
+        prose: templateChapterProse(profile, ch.beatKey, u.ev, {
+          realmName: forgeCtx.realmName,
+          trialTitle: trial.title,
+          totalWeeks: trial.totalWeeks,
+        }),
+        proseSource: 'fallback',
+      },
+    });
+  }
 
   await prisma.vow.create({
     data: {

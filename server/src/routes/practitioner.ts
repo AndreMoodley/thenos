@@ -46,6 +46,7 @@ practitionerRouter.post(
       note: z.string().max(500).optional(),
       occurredOn: z.coerce.date().optional(),
       clientId: z.string().max(64).optional(),
+      plannedSessionId: z.string().max(64).optional(),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) throw badRequest('Invalid strike payload');
@@ -58,6 +59,8 @@ practitionerRouter.post(
       crossed: result.crossed,
       cleansed: result.cleansed,
       sessionId: result.sessionId,
+      fulfilledPlanned: result.fulfilledPlanned,
+      unlockedChapters: result.unlockedChapters,
     });
   }),
 );
