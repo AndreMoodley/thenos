@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { reduceMotionEnabled, cinematicDuration } from '../lib/reduceMotion';
 
-export type CinematicKind = 'rebirth' | 'ascension' | 'summon' | 'vow_flourish';
+export type CinematicKind = 'rebirth' | 'ascension' | 'summon' | 'vow_flourish' | 'chapter' | 'gate' | 'trial';
 
 export interface ActiveCinematic {
   key: string; // e.g. 'rebirth' | 'ascension_transcendence' | 'summon'

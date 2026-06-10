@@ -8,10 +8,24 @@ import type { PractitionerPublic } from './types';
 const KEY = 'voidborn.syncQueue.v1';
 
 export type QueuedMutation =
-  | { kind: 'session'; clientId: string; modality: string; reps: number; rating?: number; note?: string; occurredOn?: string }
+  | { kind: 'session'; clientId: string; modality: string; reps: number; rating?: number; note?: string; occurredOn?: string; plannedSessionId?: string }
   | { kind: 'leak'; clientId: string; category: string; label: string; cost: number }
   | { kind: 'anchor'; clientId: string; occurredOn?: string }
-  | { kind: 'seal'; clientId: string; amount: number };
+  | { kind: 'seal'; clientId: string; amount: number }
+  // absolute-set mutations — naturally idempotent on replay
+  | { kind: 'plan_move'; clientId: string; plannedSessionId: string; scheduledOn: string }
+  | {
+      kind: 'soul_profile';
+      clientId: string;
+      currentSelf: string;
+      higherSelf: string;
+      outcome: string;
+      obstacleCategory: string;
+      obstacleName: string;
+      obstacleDetail: string;
+      wardPlan: string;
+      styleKey?: string;
+    };
 
 export const newClientId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -54,7 +68,14 @@ export async function queueLength(): Promise<number> {
 export interface FlushResult {
   flushed: number;
   practitioner?: PractitionerPublic;
-  results: { clientId: string; ok: boolean; struck?: boolean; error?: string }[];
+  results: {
+    clientId: string;
+    ok: boolean;
+    struck?: boolean;
+    error?: string;
+    fulfilledPlanned?: { id: string; kind: string; title: string; trialId: string } | null;
+    unlockedChapters?: { id: string; index: number; beatKey: string; title: string }[];
+  }[];
 }
 
 /** Flush the queue. Idempotent by clientId server-side, so retries can never double-count. */

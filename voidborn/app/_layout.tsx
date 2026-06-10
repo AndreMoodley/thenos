@@ -13,6 +13,7 @@ import { useMetrics } from '../src/store/metrics';
 import { useCharacterConfig } from '../src/store/characterConfig';
 import { useOfflineSync } from '../src/hooks/useOfflineSync';
 import { useAscensionWatcher } from '../src/hooks/useAscensionWatcher';
+import { useChapterWatcher } from '../src/hooks/useChapterWatcher';
 import { TopStatus } from '../src/components/TopStatus';
 import { BottomBar, SPACES } from '../src/components/BottomBar';
 import { CinematicOverlay } from '../src/components/CinematicOverlay';
@@ -68,6 +69,7 @@ function Shell({ inRebirth, authed }: { inRebirth: boolean; authed: boolean }) {
 function AuthedEffects() {
   useOfflineSync();
   useAscensionWatcher();
+  useChapterWatcher();
   const hydrateMetrics = useMetrics((s) => s.hydrate);
   const entity = useMetrics((s) => s.entity);
   const loadFromEnvelope = useCharacterConfig((s) => s.loadFromEnvelope);

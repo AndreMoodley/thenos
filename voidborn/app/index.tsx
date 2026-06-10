@@ -5,7 +5,8 @@ import { colors, spacing, radii, type as typo } from '../src/constants/theme';
 import { SpaceBackdrop } from '../src/spaces/SpaceBackdrop';
 import { EntityView } from '../src/components/EntityView';
 import { JuicyButton } from '../src/components/JuicyButton';
-import { QuickLogSheet } from '../src/components/QuickLogSheet';
+import { QuickLogSheet, type QuickLogPrefill } from '../src/components/QuickLogSheet';
+import { QuestCard } from '../src/components/QuestCard';
 import { useMetrics } from '../src/store/metrics';
 import { useManifestation } from '../src/hooks/useManifestation';
 import { api } from '../src/api/endpoints';
@@ -15,6 +16,7 @@ export default function DomainScreen() {
   const p = useMetrics((s) => s.practitioner);
   const manifestation = useManifestation();
   const [logOpen, setLogOpen] = useState(false);
+  const [prefill, setPrefill] = useState<QuickLogPrefill | null>(null);
   const [voice, setVoice] = useState<string | null>(null);
 
   // The Voice of the Void reflects on the daily return — grounded only in real data.
@@ -54,10 +56,23 @@ export default function DomainScreen() {
             <Text style={styles.voiceText}>“{voice}”</Text>
           </View>
         )}
-        <JuicyButton label="Log training" action="log" onPress={() => setLogOpen(true)} />
+        <QuestCard
+          onBegin={(q) => {
+            setPrefill(q);
+            setLogOpen(true);
+          }}
+        />
+        <JuicyButton
+          label="Log training"
+          action="log"
+          onPress={() => {
+            setPrefill(null);
+            setLogOpen(true);
+          }}
+        />
       </View>
 
-      <QuickLogSheet visible={logOpen} onClose={() => setLogOpen(false)} />
+      <QuickLogSheet visible={logOpen} onClose={() => setLogOpen(false)} prefill={prefill} />
     </View>
   );
 }

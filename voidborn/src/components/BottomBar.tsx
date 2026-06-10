@@ -9,8 +9,8 @@ import { fire } from '../lib/juice';
 
 export const SPACES = [
   { route: '/', label: 'Domain', glyph: '◉' },
-  { route: '/calendar', label: 'Calendar', glyph: '◷' },
-  { route: '/trophy-hall', label: 'Trophy Hall', glyph: '♛' },
+  { route: '/calendar', label: 'Quest Log', glyph: '◷' },
+  { route: '/trophy-hall', label: 'Chronicle', glyph: '♛' },
   { route: '/chamber', label: 'Manifestation', glyph: '✦' },
 ] as const;
 

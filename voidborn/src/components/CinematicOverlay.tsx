@@ -13,6 +13,9 @@ const TITLES: Record<string, string> = {
   ascension: 'You ascend',
   summon: 'A spirit answers',
   vow_flourish: 'A vow, kept',
+  chapter: 'The Chronicle turns',
+  gate: 'The gate falls',
+  trial: 'A trial, sworn',
 };
 
 export function CinematicOverlay() {
