@@ -4,6 +4,8 @@ import { enqueue, flush, newClientId, queueLength } from '../api/queue';
 import type { EntityEnvelope, PractitionerPublic, Vow, VoidSession } from '../api/types';
 import { realmsCrossed, realmForHammerCount, type Realm } from '../constants/realms';
 import { useAuth } from './auth';
+import { useTrial } from './trial';
+import { useSaga } from './saga';
 
 const DAY_MS = 86_400_000;
 const dayDiff = (a: Date, b: Date) =>
@@ -25,7 +27,13 @@ interface MetricsState {
 
   hydrate: () => Promise<void>;
   refreshEntity: () => Promise<void>;
-  logStrike: (input: { modality: string; reps: number; rating?: number; note?: string }) => Promise<{ crossed: Realm[] }>;
+  logStrike: (input: {
+    modality: string;
+    reps: number;
+    rating?: number;
+    note?: string;
+    plannedSessionId?: string;
+  }) => Promise<{ crossed: Realm[] }>;
   seal: (amount?: number) => Promise<void>;
   addLeak: (input: { category: string; label: string; cost: number }) => Promise<void>;
   anchor: () => Promise<void>;
@@ -63,10 +71,15 @@ export const useMetrics = create<MetricsState>((set, get) => ({
   lastAscension: null,
 
   hydrate: async () => {
+    // The persisted Quest Log / Chronicle render first; the server overwrites when reachable.
+    await Promise.all([useTrial.getState().loadPersisted(), useSaga.getState().loadPersisted()]);
     try {
       const state = await api.sync.state();
       setPractitioner(set, state.practitioner);
       set({ sessions: state.sessions ?? [], vows: state.vows ?? [] });
+      useTrial.getState().hydrateFromState(state.trial ?? null);
+      if (state.saga) useSaga.getState().hydrateFromState({ ...state.saga, profile: state.soulProfile ?? null });
+      else useSaga.getState().hydrateFromState({ saga: null, chapters: [], nextTease: null, profile: state.soulProfile ?? null });
       await get().refreshEntity();
     } catch {
       // offline — keep whatever auth seeded; the queue reconciles on reconnect
@@ -82,9 +95,11 @@ export const useMetrics = create<MetricsState>((set, get) => ({
     }
   },
 
-  logStrike: async ({ modality, reps, rating, note }) => {
+  logStrike: async ({ modality, reps, rating, note, plannedSessionId }) => {
     const p = get().practitioner;
     let crossed: Realm[] = [];
+    // Optimistic quest fulfillment — a LINK only; the strike math below is unchanged (#12).
+    if (plannedSessionId) useTrial.getState().noteFulfilled(plannedSessionId);
     if (p) {
       const struck = reps > 0;
       const before = p.hammerCount;
@@ -108,7 +123,7 @@ export const useMetrics = create<MetricsState>((set, get) => ({
       setPractitioner(set, optimistic);
       if (crossed[0]) set({ lastAscension: crossed[0] });
     }
-    await enqueue({ kind: 'session', clientId: newClientId(), modality, reps, rating, note });
+    await enqueue({ kind: 'session', clientId: newClientId(), modality, reps, rating, note, plannedSessionId });
     await get().syncNow();
     return { crossed };
   },
@@ -138,6 +153,13 @@ export const useMetrics = create<MetricsState>((set, get) => ({
   syncNow: async () => {
     const res = await flush();
     if (res.practitioner) get().reconcile(res.practitioner);
+    // Server-confirmed quest links + chapter unlocks ride the flush results.
+    for (const r of res.results) {
+      if (!r.ok) continue;
+      if (r.fulfilledPlanned) useTrial.getState().noteFulfilled(r.fulfilledPlanned.id);
+      if (r.unlockedChapters?.length) useSaga.getState().noteUnlocked(r.unlockedChapters);
+    }
+    if (res.flushed > 0) void useSaga.getState().retryPendingForge();
     set({ pendingCount: await queueLength() });
   },
 

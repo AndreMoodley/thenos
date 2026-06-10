@@ -29,6 +29,24 @@ with exactly what's required to close them.
 Reproduce: `cd server && npm i && npx prisma migrate dev && npm run seed && npm test && npm run dev`
 then `curl :4000/health`; and `npm i && npm run test:logic` at the repo root for the pure client logic.
 
+## The Two Engines — Trials + Saga (T1–T6), verified here
+
+| Check | Result |
+|---|---|
+| `trials_and_saga` migration on a fresh Postgres DB | ✅ applies (init + new in sequence) |
+| Protocol generator unit tests (determinism, 6/10/26-wk splits, 40–60% taper, pillar day, stillness reps:0, regen future-only) | ✅ 12 passing |
+| Adherence analyzer + saga beats + forge fallback unit tests | ✅ 16 passing (server total: 40) |
+| Seeded demo: trial 3 weeks deep (week 3/10, Tribulation), 50 quests, 9 fulfilled via real linked sessions, hammer == Σ strikes (3,500) | ✅ |
+| Seeded demo saga: murim arc, chapters 1–3 unlocked w/ real `unlockedBy` events + fallback prose; 4+ locked teases; nextTease | ✅ |
+| Counted quest fulfilled via `POST /sessions` + `plannedSessionId` ⇒ struck + hammer↑ + chapters `tower_floor` (phase entered) and `hidden_master` (streak ≥7) unlocked in order | ✅ |
+| **Stillness quest @ `reps:0` ⇒ fulfilled, NO StrikeEvent, hammer unchanged** (invariant #12 proof) | ✅ |
+| `/sync/flush` replay of both ⇒ `idempotent: true`, no double-fulfill, hammer unchanged | ✅ |
+| `/admin/recompute-hammer` after all of the above ⇒ drift 0 | ✅ |
+| Fresh account E2E: signup → `PUT /saga/profile` → **keyless** `POST /saga/forge` (tower style, fallback arc) → `awakening` unlocks; `POST /trials` ⇒ 32 quests + `system_window` unlocks | ✅ |
+| Realignment accept moves only the current week's slipped quests; regenerate (new pillar day + volume) preserves all fulfilled links | ✅ |
+| Client: full Expo typecheck + **web export bundles clean** with Quest Log / Chronicle / Mirror Rite / stores | ✅ |
+| Device-pending: Quest Log + Chronicle airplane-mode walkthrough on a dev build (the persisted stores + idempotent queue are the same code paths verified above via curl) | ⏳ |
+
 ## The app now RUNS headless (web target) — verified end-to-end here
 
 `bash voidborn/scripts/headless-run.sh` runs the **whole game loop** in **headless Chromium** against

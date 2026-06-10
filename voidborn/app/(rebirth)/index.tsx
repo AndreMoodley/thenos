@@ -1,4 +1,7 @@
 // REBIRTH — onboarding + the birth set-piece. You are returning to a being, not opening a tool.
+// After signup the MIRROR RITE runs in place (current self → higher self → Inner Demon → Ward →
+// style → forge), then the trial wizard, then the birth beat. Every step is skippable — both
+// rites can be taken later from the Chronicle and the Quest Log.
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -7,12 +10,16 @@ import { colors, spacing, radii, type as typo } from '../../src/constants/theme'
 import { SpaceBackdrop } from '../../src/spaces/SpaceBackdrop';
 import { FallbackEntity } from '../../src/entity/FallbackEntity';
 import { JuicyButton } from '../../src/components/JuicyButton';
+import { SagaOnboardingSheet } from '../../src/components/SagaOnboardingSheet';
+import { TrialWizardSheet } from '../../src/components/TrialWizardSheet';
 import { useAuth } from '../../src/store/auth';
 import { fire } from '../../src/lib/juice';
 import { reduceMotionEnabled, cinematicDuration } from '../../src/lib/reduceMotion';
 
 // A nascent embryo at the Foundation Realm — full ki, calm.
 const NEWBORN_INPUTS = { realm: 1, ki: 100, shadowLevel: 1, streak: 0, streakBonus: false, mastery: 0, corruption: 0 };
+
+type Phase = 'form' | 'rite' | 'trial' | 'born';
 
 export default function RebirthScreen() {
   const router = useRouter();
@@ -23,8 +30,16 @@ export default function RebirthScreen() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
-  const [reborn, setReborn] = useState(false);
+  const [phase, setPhase] = useState<Phase>('form');
   const [error, setError] = useState<string | null>(null);
+
+  const beBorn = () => {
+    // The void coalesces — a short birth beat, then the Domain.
+    setPhase('born');
+    fire('rebirth');
+    const ms = cinematicDuration(1500, 400, reduceMotionEnabled());
+    setTimeout(() => router.replace('/'), ms);
+  };
 
   const submit = async () => {
     setBusy(true);
@@ -32,11 +47,9 @@ export default function RebirthScreen() {
     try {
       if (mode === 'signup') {
         await signup(email.trim(), password, name.trim() || undefined);
-        // The void coalesces — a short birth beat, then the Domain.
-        setReborn(true);
-        fire('rebirth');
-        const ms = cinematicDuration(1500, 400, reduceMotionEnabled());
-        setTimeout(() => router.replace('/'), ms);
+        // The Mirror Rite first: the entity should be born already knowing who it is becoming.
+        setPhase('rite');
+        setBusy(false);
       } else {
         await login(email.trim(), password);
         router.replace('/');
@@ -57,11 +70,16 @@ export default function RebirthScreen() {
     <View style={styles.fill}>
       <SpaceBackdrop domainKey="dojo" allow3D={false} />
 
-      {reborn ? (
+      {phase === 'born' ? (
         <Animated.View entering={FadeIn} style={styles.center}>
           <FallbackEntity inputs={NEWBORN_INPUTS} size={300} />
           <Text style={styles.born}>You are reborn.</Text>
         </Animated.View>
+      ) : phase !== 'form' ? (
+        <View style={styles.center}>
+          <FallbackEntity inputs={NEWBORN_INPUTS} size={220} />
+          <Text style={styles.tagline}>The void holds its breath…</Text>
+        </View>
       ) : (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.center}>
           <FallbackEntity inputs={NEWBORN_INPUTS} size={180} />
@@ -85,6 +103,14 @@ export default function RebirthScreen() {
           </View>
         </KeyboardAvoidingView>
       )}
+
+      {/* The Mirror Rite — skippable; closing it walks on to the trial wizard, then birth. */}
+      <SagaOnboardingSheet
+        visible={phase === 'rite'}
+        onClose={() => setPhase('trial')}
+        onForged={() => setPhase('trial')}
+      />
+      <TrialWizardSheet visible={phase === 'trial'} onClose={beBorn} />
     </View>
   );
 }

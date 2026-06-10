@@ -7,8 +7,17 @@ import type {
   DomainCatalogEntry,
   EntityEnvelope,
   FormCatalogEntry,
+  PlannedSession,
   PractitionerPublic,
+  Realignment,
+  SagaChapter,
+  SagaState,
+  SagaStyle,
+  SoulProfile,
   StrikeResult,
+  Trial,
+  TrialState,
+  UnlockedChapter,
   Vow,
   VoidSession,
 } from './types';
@@ -82,8 +91,52 @@ export const api = {
     activate: (companionKey: string) => request<{ ok: boolean; active: string }>('/companions/activate', { method: 'POST', body: { companionKey } }),
   },
 
+  trials: {
+    active: () => request<TrialState>('/trials/active'),
+    list: () => request<{ trials: TrialState[] }>('/trials'),
+    create: (body: {
+      title: string;
+      goalKind: 'breakthrough' | 'open_path';
+      goalLabel?: string;
+      focusModality: string;
+      experience: 'novice' | 'practiced' | 'seasoned';
+      ability: { baselineReps: number };
+      sessionsPerWeek: number;
+      pillarDay: number;
+      volumeDial: number;
+      difficultyDial: number;
+      totalWeeks: number;
+      startDate?: string;
+      targetDate?: string;
+    }) => request<TrialState & { unlockedChapters: UnlockedChapter[] }>('/trials', { method: 'POST', body }),
+    regenerate: (id: string, body: { sessionsPerWeek?: number; pillarDay?: number; volumeDial?: number; difficultyDial?: number }) =>
+      request<TrialState>(`/trials/${id}/regenerate`, { method: 'POST', body }),
+    move: (id: string, psId: string, scheduledOn: string) =>
+      request<{ plannedSession: PlannedSession }>(`/trials/${id}/sessions/${psId}/move`, { method: 'POST', body: { scheduledOn } }),
+    complete: (id: string, chain = true) =>
+      request<{ trial: Trial; flourish: boolean; chained: Trial | null; unlockedChapters: UnlockedChapter[] }>(`/trials/${id}/complete`, {
+        method: 'POST',
+        body: { chain },
+      }),
+    abandon: (id: string) => request<{ trial: Trial }>(`/trials/${id}`, { method: 'DELETE' }),
+    checkRealignments: (id: string) =>
+      request<{ realignments: Realignment[]; created: boolean }>(`/trials/${id}/realignments/check`, { method: 'POST' }),
+    acceptRealignment: (id: string, rid: string) => request<TrialState>(`/trials/${id}/realignments/${rid}/accept`, { method: 'POST' }),
+    dismissRealignment: (id: string, rid: string) =>
+      request<{ realignment: Realignment }>(`/trials/${id}/realignments/${rid}/dismiss`, { method: 'POST' }),
+  },
+
+  saga: {
+    styles: () => request<{ styles: SagaStyle[] }>('/saga/styles'),
+    saveProfile: (body: SoulProfile) => request<{ profile: SoulProfile }>('/saga/profile', { method: 'PUT', body }),
+    forge: (styleKey?: string, regenerate = false) =>
+      request<SagaState & { reused: boolean }>('/saga/forge', { method: 'POST', body: { styleKey, regenerate } }),
+    state: () => request<SagaState & { profile: SoulProfile | null; styles: SagaStyle[] }>('/saga/state'),
+    chapter: (id: string) => request<{ chapter: SagaChapter }>(`/saga/chapters/${id}`),
+  },
+
   coach: {
-    reflect: (occasion: 'rebirth' | 'ascension' | 'return' | 'oracle' = 'return') =>
+    reflect: (occasion: 'rebirth' | 'ascension' | 'return' | 'oracle' | 'gate' | 'realign' | 'chapter' = 'return') =>
       request<{ reflection: string; source: string; cached: boolean }>('/coach/reflect', { method: 'POST', body: { occasion } }),
   },
 

@@ -84,6 +84,134 @@ export interface StrikeResult {
   crossed: RealmRef[];
   cleansed: boolean;
   sessionId?: string;
+  fulfilledPlanned?: FulfilledPlanned | null;
+  unlockedChapters?: UnlockedChapter[];
+}
+
+// ── trials (the forged path) ──────────────────────────────────
+
+export type PlannedKind = 'flow' | 'surge' | 'pillar' | 'gate' | 'stillness';
+export type PhaseKey = 'gathering' | 'tribulation' | 'quieting';
+
+export interface PhaseSpan {
+  phaseKey: PhaseKey;
+  firstWeek: number;
+  lastWeek: number;
+}
+
+export interface Trial {
+  id: string;
+  title: string;
+  goalKind: 'breakthrough' | 'open_path';
+  goalLabel: string | null;
+  focusModality: string;
+  experience: 'novice' | 'practiced' | 'seasoned';
+  ability: { baselineReps: number };
+  sessionsPerWeek: number;
+  pillarDay: number; // 0 = Monday
+  volumeDial: number;
+  difficultyDial: number;
+  totalWeeks: number;
+  startDate: string;
+  targetDate: string | null;
+  status: 'active' | 'completed' | 'abandoned';
+  vowId: string | null;
+  chainedFromId: string | null;
+  // derived server-side — never stored
+  currentWeekIndex: number;
+  currentPhase: PhaseKey | null;
+  phasePlan: PhaseSpan[];
+}
+
+export interface PlannedSession {
+  id: string;
+  trialId: string;
+  scheduledOn: string; // UTC midnight
+  kind: PlannedKind;
+  modality: string;
+  targetReps: number; // 0 for stillness
+  title: string;
+  fulfilledBySessionId: string | null;
+  fulfilledAt: string | null;
+}
+
+export interface Realignment {
+  id: string;
+  kind: 'ease' | 'intensify' | 'realign_missed';
+  reason: string;
+  payload: Record<string, unknown>;
+  status: 'proposed' | 'accepted' | 'dismissed';
+  createdAt: string;
+}
+
+export interface TrialState {
+  trial: Trial | null;
+  plannedSessions: PlannedSession[];
+  realignments: Realignment[];
+}
+
+export interface FulfilledPlanned {
+  id: string;
+  kind: PlannedKind;
+  title: string;
+  trialId: string;
+}
+
+// ── saga (the chronicle) ──────────────────────────────────────
+
+export interface SoulProfile {
+  currentSelf: string;
+  higherSelf: string;
+  outcome: string;
+  obstacleCategory: string;
+  obstacleName: string;
+  obstacleDetail: string;
+  wardPlan: string;
+  styleKey: string | null;
+}
+
+export interface SagaStyle {
+  styleKey: string;
+  name: string;
+  descriptor: string;
+}
+
+export interface Saga {
+  id: string;
+  styleKey: string;
+  title: string;
+  synopsis: string;
+  demonName: string;
+  status: 'active' | 'completed' | 'archived';
+  source: string;
+  trialId: string | null;
+  createdAt: string;
+}
+
+export interface SagaChapter {
+  id: string;
+  index: number;
+  beatKey: string;
+  title: string;
+  tease: string;
+  optional: boolean;
+  unlockedAt: string | null;
+  prose?: string | null; // present only when unlocked
+  proseSource?: string | null;
+  unlockedBy?: Record<string, unknown> | null;
+}
+
+export interface SagaState {
+  saga: Saga | null;
+  chapters: SagaChapter[];
+  nextTease: { index: number; title: string; tease: string } | null;
+}
+
+export interface UnlockedChapter {
+  id: string;
+  index: number;
+  beatKey: string;
+  title: string;
 }
 
 export interface AuthResponse {

@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { realmForHammerCount } from './realms.js';
 
 export interface VoiceContext {
-  occasion: 'rebirth' | 'ascension' | 'return' | 'oracle';
+  occasion: 'rebirth' | 'ascension' | 'return' | 'oracle' | 'gate' | 'realign' | 'chapter';
   name: string;
   hammerCount: number;
   ki: number;
@@ -16,6 +16,14 @@ export interface VoiceContext {
   recentSessions: { modality: string; reps: number; occurredOn: string }[];
   recentLeaks: { category: string; cost: number }[];
   activeVows: { title: string; resolutionDate: string; type: string }[];
+  /** The sworn trial, when one paces the practitioner's weeks. Derived fields, never stored. */
+  trial?: {
+    title: string;
+    phase: string | null;
+    weekIndex: number;
+    totalWeeks: number;
+    adherence: number | null;
+  } | null;
 }
 
 const SYSTEM = `You are the Voice of the Void in VOIDBORN — a presence that speaks THROUGH the player's evolving entity, never as a chatbot.
@@ -37,6 +45,7 @@ export function promptHashOf(ctx: VoiceContext): string {
     s: ctx.recentSessions.length,
     l: ctx.recentLeaks.map((l) => l.category).sort(),
     v: ctx.activeVows.map((v) => v.title).sort(),
+    t: ctx.trial ? [ctx.trial.title, ctx.trial.phase, ctx.trial.weekIndex] : null,
   });
   return crypto.createHash('sha256').update(key).digest('hex').slice(0, 24);
 }
@@ -54,6 +63,11 @@ function composeUserPrompt(ctx: VoiceContext): string {
     }`,
     `Recent ki leaks: ${ctx.recentLeaks.map((l) => `${l.category} (-${l.cost})`).join(', ') || 'none'}`,
     `Active vows: ${ctx.activeVows.map((v) => `${v.title} [${v.type}] due ${v.resolutionDate}`).join('; ') || 'none'}`,
+    ctx.trial
+      ? `Sworn trial: "${ctx.trial.title}" — week ${ctx.trial.weekIndex + 1} of ${ctx.trial.totalWeeks}` +
+        (ctx.trial.phase ? `, the ${ctx.trial.phase}` : '') +
+        (ctx.trial.adherence !== null ? `, ${Math.round(ctx.trial.adherence * 100)}% of this week's quests met` : '')
+      : 'Sworn trial: none',
     '',
     'Speak to them now, as the Void, about what this pattern shows. Ground every word in the data above.',
   ];
@@ -75,6 +89,11 @@ export function fallbackReflection(ctx: VoiceContext): string {
     parts.push(`I count ${ctx.recentSessions.length} recent session${ctx.recentSessions.length === 1 ? '' : 's'} in you — that is what moved the hammer.`);
   } else {
     parts.push(`The hammer has been quiet of late; it answers only to the next strike, whenever you choose it.`);
+  }
+  if (ctx.trial) {
+    parts.push(
+      `Week ${ctx.trial.weekIndex + 1} of ${ctx.trial.totalWeeks} on "${ctx.trial.title}"${ctx.trial.phase ? ` — the ${ctx.trial.phase} holds you now` : ''}.`,
+    );
   }
   if (ctx.ki < 40 && ctx.recentLeaks.length > 0) {
     parts.push(`Your ki sits at ${ctx.ki}; the ${ctx.recentLeaks[0]!.category} drew on it. Seal what you can, gently.`);

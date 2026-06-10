@@ -14,7 +14,10 @@ export type JuiceAction =
   | 'vowComplete'
   | 'ascension'
   | 'rebirth'
-  | 'summon';
+  | 'summon'
+  | 'questComplete'
+  | 'chapter'
+  | 'forge';
 
 const MAP: Record<JuiceAction, { haptic: HapticKind; cue: CueKey }> = {
   tap: { haptic: 'light', cue: 'tap' },
@@ -28,6 +31,9 @@ const MAP: Record<JuiceAction, { haptic: HapticKind; cue: CueKey }> = {
   ascension: { haptic: 'heavy', cue: 'ascension' },
   rebirth: { haptic: 'heavy', cue: 'rebirth' },
   summon: { haptic: 'success', cue: 'summon' },
+  questComplete: { haptic: 'success', cue: 'vow' },
+  chapter: { haptic: 'success', cue: 'vow' },
+  forge: { haptic: 'heavy', cue: 'rebirth' },
 };
 
 /** Fire the feedback for an action. Safe to call anywhere; never throws. */

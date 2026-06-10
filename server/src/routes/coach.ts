@@ -4,6 +4,8 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 import { badRequest, tooMany, wrap } from '../lib/http.js';
 import { reflect, promptHashOf, type VoiceContext } from '../lib/voice.js';
+import { phasePlanFor, phaseForWeek, weekIndexFor } from '../lib/protocol.js';
+import { summarizeWeeks } from '../lib/adherence.js';
 
 export const coachRouter = Router();
 coachRouter.use(requireAuth);
@@ -15,16 +17,38 @@ const lastLiveCall = new Map<string, number>();
 coachRouter.post(
   '/reflect',
   wrap(async (req: AuthedRequest, res) => {
-    const schema = z.object({ occasion: z.enum(['rebirth', 'ascension', 'return', 'oracle']).default('return') });
+    const schema = z.object({
+      occasion: z.enum(['rebirth', 'ascension', 'return', 'oracle', 'gate', 'realign', 'chapter']).default('return'),
+    });
     const parsed = schema.safeParse(req.body ?? {});
     if (!parsed.success) throw badRequest('Invalid reflect payload');
 
     const p = await prisma.practitioner.findUniqueOrThrow({ where: { id: req.practitionerId! } });
-    const [sessions, leaks, vows] = await Promise.all([
+    const [sessions, leaks, vows, trial] = await Promise.all([
       prisma.voidSession.findMany({ where: { practitionerId: p.id }, orderBy: { occurredOn: 'desc' }, take: 10 }),
       prisma.kiLeak.findMany({ where: { practitionerId: p.id }, orderBy: { occurredAt: 'desc' }, take: 10 }),
       prisma.vow.findMany({ where: { practitionerId: p.id, status: 'active' }, orderBy: { resolutionDate: 'asc' }, take: 10 }),
+      prisma.trial.findFirst({
+        where: { practitionerId: p.id, status: 'active' },
+        include: { plannedSessions: true },
+      }),
     ]);
+
+    let trialCtx: VoiceContext['trial'] = null;
+    if (trial) {
+      const now = new Date();
+      const weekIndex = weekIndexFor(trial.startDate, now);
+      const phase = phaseForWeek(phasePlanFor(trial.totalWeeks, trial.goalKind), weekIndex)?.phaseKey ?? null;
+      const summaries = summarizeWeeks(trial, trial.plannedSessions, [], now);
+      const thisWeek = summaries.find((s) => s.weekIndex === weekIndex);
+      trialCtx = {
+        title: trial.title,
+        phase,
+        weekIndex,
+        totalWeeks: trial.totalWeeks,
+        adherence: thisWeek && thisWeek.planned > 0 ? thisWeek.adherence : null,
+      };
+    }
 
     const ctx: VoiceContext = {
       occasion: parsed.data.occasion,
@@ -36,6 +60,7 @@ coachRouter.post(
       recentSessions: sessions.map((s) => ({ modality: s.modality, reps: s.reps, occurredOn: s.occurredOn.toISOString() })),
       recentLeaks: leaks.map((l) => ({ category: l.category, cost: l.cost })),
       activeVows: vows.map((v) => ({ title: v.title, resolutionDate: v.resolutionDate.toISOString(), type: v.type })),
+      trial: trialCtx,
     };
 
     const hash = promptHashOf(ctx);

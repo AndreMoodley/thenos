@@ -4,6 +4,8 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 import { badRequest, notFound, wrap } from '../lib/http.js';
 import { publicPractitioner } from '../lib/serialize.js';
+import { completeTrialTx } from '../lib/trialOps.js';
+import { advanceSaga } from '../lib/sagaEngine.js';
 
 export const vowsRouter = Router();
 vowsRouter.use(requireAuth);
@@ -89,23 +91,44 @@ vowsRouter.delete(
   }),
 );
 
-// Keep a vow. Completing a MAJOR vow becomes a Trophy (derived in the Trophy Hall) and triggers a
-// one-time evolution flourish (flagged here; the client plays it).
+// Keep a vow. Completing a MAJOR vow becomes a Trophy (derived in the Chronicle) and triggers a
+// one-time evolution flourish (flagged here; the client plays it). Keeping a TRIAL vow also
+// completes its trial — one act, one transaction — and the saga hears about it.
 vowsRouter.post(
   '/:id/keep',
   wrap(async (req: AuthedRequest, res) => {
     const vow = await ownedVow(req.practitionerId!, req.params.id);
     if (vow.status !== 'active') throw badRequest('Vow already resolved');
-    const updated = await prisma.vow.update({
+    const pid = req.practitionerId!;
+
+    const out = await prisma.$transaction(async (tx) => {
+      const trial =
+        vow.vowSubtype === 'trial'
+          ? await tx.trial.findFirst({ where: { vowId: vow.id, status: 'active' } })
+          : null;
+      if (trial) {
+        // completeTrialTx keeps the vow, completes the trial, chains the Open Path,
+        // and advances the saga — the single shared implementation.
+        const done = await completeTrialTx(tx, pid, trial, { chain: true });
+        return { flourish: done.flourish, unlockedChapters: done.unlockedChapters, chained: done.chained };
+      }
+      await tx.vow.update({
+        where: { id: vow.id },
+        data: {
+          status: 'kept',
+          resolvedAt: new Date(),
+          wagerStatus: vow.wagerStatus === 'pending' ? 'won' : vow.wagerStatus,
+        },
+      });
+      const { unlocked } = await advanceSaga(tx, pid, [{ kind: 'vow_kept', vowId: vow.id }]);
+      return { flourish: vow.type === 'major', unlockedChapters: unlocked, chained: null };
+    });
+
+    const updated = await prisma.vow.findUniqueOrThrow({
       where: { id: vow.id },
-      data: {
-        status: 'kept',
-        resolvedAt: new Date(),
-        wagerStatus: vow.wagerStatus === 'pending' ? 'won' : vow.wagerStatus,
-      },
       include: { progressions: { orderBy: { orderIndex: 'asc' } } },
     });
-    res.json({ vow: updated, flourish: vow.type === 'major' });
+    res.json({ vow: updated, flourish: out.flourish, unlockedChapters: out.unlockedChapters, chained: out.chained });
   }),
 );
 

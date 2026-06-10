@@ -6,6 +6,8 @@ import { authRouter } from './routes/auth.js';
 import { practitionerRouter } from './routes/practitioner.js';
 import { sessionsRouter } from './routes/sessions.js';
 import { vowsRouter } from './routes/vows.js';
+import { trialsRouter } from './routes/trials.js';
+import { sagaRouter } from './routes/saga.js';
 import { entityRouter } from './routes/entity.js';
 import { spacesRouter } from './routes/spaces.js';
 import { cosmeticsRouter } from './routes/cosmetics.js';
@@ -32,6 +34,8 @@ export function createApp() {
   app.use('/practitioner', practitionerRouter);
   app.use('/sessions', sessionsRouter);
   app.use('/vows', vowsRouter);
+  app.use('/trials', trialsRouter);
+  app.use('/saga', sagaRouter);
   app.use('/entity', entityRouter);
   app.use('/spaces', spacesRouter);
   app.use('/cosmetics', cosmeticsRouter);
