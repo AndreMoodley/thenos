@@ -119,4 +119,67 @@ You are building **VOIDBORN** from zero: a single-player ascension game that fus
 
 ---
 
+# The Beautiful Build — Ink & Ember, the Hall of Feats, the Entity Embodied
+
+> Design spine: `GAME_DESIGN.md §11–13`. Governing law: invariant 16 — **feats/titles/marks are
+> computed from the ledger with an audit; beauty renders the ledger and never invents, obscures, or
+> replaces a readout.** The data never changes; only its costume does.
+
+## PHASE V1 — Ink & Ember (the look)
+- **P0 procedural panel engine** (`src/lib/panels/`): deterministic generative compositions seeded
+  from a chapter's `unlockedBy` / a feat's `earnedBy` hash — ink-bloom fields, particle
+  constellations, style motifs, entity silhouette composited; one renderer skins chapters, feats,
+  arc covers, and trial headers. Offline always renders; no two panels alike.
+- **Style ink systems** (`constants/inks.ts`): per-saga-style palettes + motifs (murim
+  vermillion-seal/ink-wash · isekai system-glass blue/scanline · tower brass/verdigris/floor-plates ·
+  regression dusk-violet/ember/double-exposure) tinting all story chrome while that saga is active.
+- **Phase grading:** Gathering (dawn-grey) → Tribulation (storm) → Quieting (pre-dawn calm) as a
+  subtle app-wide grade derived from the trial's computed phase.
+- **Materials + type + motion:** system-glass (quest chips/HUD), ink-wash (panels), foil (gates/
+  trophies/titles, sweep on tilt/focus); display brush-serif for chapter titles, tabular numerals
+  for the numbers that matter; panel-grammar motion (ink-bloom chapter reveal, vermillion seal-stamp
+  on fulfillment, speed-lines on gates, splash-page ascensions) — every beat with a reduce-motion
+  calm variant.
+- **Gate:** the Chronicle is **screenshot-beautiful with zero authored assets** (P0 only); identical
+  data renders before/after (no readout obscured); reduce-motion verified; 60fps held on the
+  mid-range target. P1 authored kits / P2 generated covers slot in later, additively.
+
+## PHASE V2 — The Hall of Feats & Titles
+- `constants/feats.ts` + server `lib/feats.ts` (PURE, unit-tested): 8 families (Iron · Tempo ·
+  Gates · Demon · Path · Realm · Return · Hidden), each definition a predicate over ledger rows;
+  **progress never stored** — recomputed like realms.
+- Awards: evaluated transactionally in the same hooks that advance the saga (`logSession`, vow keep,
+  trial complete); write `PractitionerFeat` + **`earnedBy` audit**; emit `feat_earned` as a saga
+  event (Hidden chapters may listen); Voice gains the `feat` occasion; seal-stamp set-piece.
+- **Titles:** feat-set → title defs; `activeTitleKey` on Practitioner (equip via `POST /feats/title`,
+  earned-only, validated server-side); rendered under the name in every space; one-off aura shimmer
+  on equip (expression, never a stat).
+- Chronicle: the **Hall of Feats** between Turning Points and Monuments — P0 medallion panels;
+  earned = ink + foil; unearned = silhouette + condition tease; Hidden = veiled count only.
+- **Gate:** wiping `PractitionerFeat` and recomputing from the raw ledger reproduces the identical
+  award set with matching audits; nothing but ledger truth can mint a feat; demo shows earned +
+  teased + veiled medallions; unit tests green.
+
+## PHASE V3 — The Entity, Embodied (+ the Demon given a body)
+- **Presence layer:** the entity renders once in the shell and composites into all four spaces
+  (full-stage Domain · perched on the Quest Log, gazing at Today's Quest · curled beside Chronicle
+  prose · mirrored in the Chamber); it travels with the swipe.
+- **Mood engine** (computed, never stored): readiness + streak + time-of-day + recent events + Bond
+  → idle sets (dawn-stretch, focused, proud loop, vigilant, dormant-soft — wakes *delighted*,
+  reading); Bond unlocks deeper idles.
+- **Reaction vocabulary:** `react_quest/gate/chapter/feat/ward` trigger inputs on the Rive contract,
+  with the procedural `FallbackEntity` implementing **the identical contract** (posture + particles)
+  — the soul ships before the art.
+- **The embodied Demon:** a shadow-creature in the domain, in the saga style's ink, driven ONLY by
+  ledger truth — looms in stated trouble-hours and after logged leaks, recoils on ward-holds,
+  shrinks with Demon-family feats; tap → its dossier (the user's own WOOP words + the win/loss
+  ledger). Reduce-motion: a still shadow, state by size alone.
+- **Story-marks:** resolver layer between lineage and cosmetics — scar-glyph per Breakthrough Gate,
+  seal per completed trial, ember per title; earned-only, additive-only, opt-out-able.
+- **Gate:** entity present + reactive in all four spaces at 60fps on the mid-range target; demon
+  size/distance provably derived from leak/ward rows (unit test on the pure derivation); marks
+  appear only from ledger events; reduce-motion stills honored; resolver tests extended and green.
+
+---
+
 When you finish reading the three documents, complete the "Before you start" items (including the toolchain-matrix verification) and begin **Phase 0**. Pause for review at each phase boundary.

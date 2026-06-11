@@ -42,7 +42,8 @@ voidborn/                  # Expo app (TS, Expo Router)
 │                          #   trial (Quest Log, persisted), saga (Chronicle, persisted)
 ├── src/api/               # http client + offline queue/flush
 ├── src/constants/         # realms.ts, forms.ts, cosmetics.ts, theme.ts (+domainConfig),
-│                          #   trials.ts (phases/kinds + UTC helpers), saga.ts (styles/beats)
+│                          #   trials.ts (phases/kinds + UTC helpers), saga.ts (styles/beats),
+│                          #   feats.ts (feat/title defs — V2), inks.ts (style palettes — V1)
 ├── src/hooks/             # useEntityInputs, useOfflineSync, useCinematic,
 │                          #   useAscensionWatcher, useChapterWatcher
 ├── src/lib/               # device-tier + reduce-motion, haptics/audio juice, persist
@@ -103,6 +104,7 @@ npx prisma generate    # after schema changes
 13. **Saga chapters unlock ONLY from real logged events** — `unlockedBy` is the audit. AI writes flavor (titles/teases/prose), never structure or history: the authored beat skeleton (`lib/sagaBeats.ts`) is force-merged server-side, strict-Zod-validated, and keyless fallbacks (`lib/sagaTemplates.ts`) exist at every AI seam. Locked chapters expose teases, never prose.
 14. **Adaptation is suggest-only.** A `TrialRealignment` changes nothing until the practitioner accepts; accept rewrites only future, **unfulfilled** quests. The past is immutable; regeneration never touches a fulfilled row.
 15. **Trials and Sagas are progression ⇒ FREE forever.** No priceModel on any of their models, nothing gacha, additive-only (reforging archives the old saga; abandoning a trial cancels its vow — never `broken`, no corruption for re-planning).
+16. **Feats/Titles/story-marks are COMPUTED from the ledger, never granted.** Definitions are versioned code constants; every award stores an `earnedBy` audit; progress is never stored (recompute like realms). Titles (`activeTitleKey`) equip only if earned. **Beauty renders the ledger:** all art (P0 procedural — seeded from real `unlockedBy`/`earnedBy` events — P1 authored, P2 generated) illustrates real events/state and never invents, obscures, or replaces a readout. Entity mood is computed, never stored; the embodied Demon's size/distance derive only from real leak/ward rows.
 
 ---
 
@@ -123,6 +125,9 @@ Soft paywall: free Void form + full evolution + Dojo/Calendar/Trophy Hall + a fr
 ## Trials & Saga (the two engines)
 **Trial** (Runna-modeled): goal → `generateProtocol()` lays Gathering → Tribulation → Quieting weeks of `PlannedSession`s around the **Pillar Day**; dials regenerate **future weeks only**; `lib/adherence.ts` proposes suggest-only Realignments; completing a trial keeps its auto-linked major Vow and **chains an Open Path** (never a dead end). **Saga** (Yugen+WOOP-modeled): the **Mirror Rite** captures current self → higher self → **Inner Demon** (nature = `LeakCategory`) → if-then **Ward**; the **Saga Forge** writes a 4-style manhwa/isekai arc (murim/isekai/tower/regression) over the fixed 10-beat skeleton; `advanceSaga()` unlocks chapters in-transaction from real events with fallback prose, Claude refines lazily. Trophy Hall = **The Chronicle** (route unchanged); Calendar = **the Quest Log**; the Domain shows **Today's Quest**.
 
+## The look + earned identity (V1–V3, design-specced in GAME_DESIGN §11–13)
+**Ink & Ember** (V1): story surfaces are image-first panels — per-style ink systems (murim/isekai/tower/regression), phase grading (Gathering/Tribulation/Quieting tint the app), materials system-glass/ink-wash/foil, panel-grammar motion with reduce-motion variants; **P0 procedural panel engine** (deterministic, event-seeded) must make the Chronicle screenshot-beautiful with zero authored assets — P1 authored kits and P2 generated covers are additive. **Hall of Feats** (V2): `lib/feats.ts` (pure) computes 8 feat families from the ledger; awards write `PractitionerFeat` + `earnedBy` in the saga-advancing hooks; `feat_earned` is a saga event; Titles equip via `activeTitleKey`. **Entity Embodied** (V3): persistent presence layer across spaces; computed mood engine; `react_*` trigger contract with `FallbackEntity` parity; the **embodied Demon** (ledger-driven size/distance); **story-marks** resolver layer between lineage and cosmetics.
+
 ---
 
 ## Verification gates
@@ -133,3 +138,6 @@ Soft paywall: free Void form + full evolution + Dojo/Calendar/Trophy Hall + a fr
 - No stored realm/stage/look; nothing non-Companion in the gacha; reduce-motion + offline paths work; depth ≤ 1 everywhere.
 - **Trials:** stillness quest completed at `reps:0` ⇒ fulfilled with **no StrikeEvent and hammer unchanged**; flush replay idempotent (no double-fulfill); regenerate/accept never touches fulfilled or past rows; `recompute-hammer` drift stays 0.
 - **Saga:** keyless `POST /saga/forge` returns a valid fallback arc; chapters unlock in beat order only from real events (`unlockedBy` audit); locked chapters expose no prose; demo account shows a mid-plan trial + mid-arc saga with a next-chapter tease.
+- **V1:** Chronicle screenshot-beautiful at P0 (no authored assets); no readout obscured; reduce-motion variants verified.
+- **V2:** feats recompute identically from the raw ledger; `earnedBy` audit matches; titles equip only if earned; Hidden feats expose a veiled count, never conditions.
+- **V3:** entity present + reactive in all four spaces at 60fps; demon size/distance derive provably from leak/ward rows; story-marks earned-only.

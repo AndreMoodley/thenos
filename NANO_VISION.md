@@ -242,7 +242,9 @@ armor, not cage) · AR entity/domains · voice-first Nano. *Prototype-gated.*
 Horizon (each phase ships value alone, invariant-gated like T1–T6): **N0** perception spike (HealthKit
 → drafted session → confirm → strike) + command line prototype → **N1** Arts + Goal Dialogue → **N2**
 Living Protocol → **N3** HUD layer → **N4** Armed Wards (Android) → **N5** Saga v2 + Oracle → **N6**
-AR/voice frontier.
+AR/voice frontier. The **V1–V3 beautiful-build phases** (`BUILD_PROMPT.md`: Ink & Ember, the Hall of
+Feats, the Entity Embodied — `GAME_DESIGN.md §11–13`) precede or interleave with N0–N2: beauty and
+earned identity are nearer-term than perception, and everything here inherits their art tiers.
 
 **Top risks:** privacy trust (answer: N3, on-device-first, radical transparency) · AI cost/latency
 (answer: N4 — AI at the edges, deterministic core, fallbacks everywhere, as today) · iOS intervention

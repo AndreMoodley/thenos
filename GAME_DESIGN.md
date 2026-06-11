@@ -68,7 +68,7 @@ A flat hub of four spaces. **One level deep.** Expo Router file-based routes map
 |---|---|---|---|---|
 | **Domain** | `app/index.tsx` | the creature lives here; identity center | the central hub on one subject | entity reacts to live metrics; **Today's Quest**; quick-log actions; ascension fires here |
 | **Quest Log** (Calendar) | `app/calendar.tsx` | — | one-level screen, swipe-reachable | the sworn Trial's phase banner + weekly quest strip + Realignment consent; Binding Vows beneath with live countdowns |
-| **The Chronicle** (Trophy Hall) | `app/trophy-hall.tsx` | collection-as-pride | clean monument screen | the saga's chapters as manhwa episode cards + Turning Points; Ascensions/Trophies/Records fold in as Monuments |
+| **The Chronicle** (Trophy Hall) | `app/trophy-hall.tsx` | collection-as-pride | clean monument screen | the saga's chapters as illustrated manhwa panels + Turning Points + the **Hall of Feats** (titles/medallions, §12); Ascensions/Trophies/Records fold in as Monuments |
 | **Manifestation** | `app/chamber.tsx` | the customization engine | preview + commit, no deep menus | choose form, swap/recolor layers, save presets, Unseal items |
 | **Rebirth** | `app/(rebirth)/` | the creature is *born* | full-screen set-piece | onboarding: the **Mirror Rite** (WOOP identity steps) → trial wizard → the rebirth cinematic |
 
@@ -172,6 +172,8 @@ The only input is showing up. Everything purchasable is identity and environment
 - **The space and the creature share a place** — that shared place is the whole idea.
 - **Story follows fact** — chapters unlock only from logged events; the Chronicle can never be read ahead of the work, and the AI may flavor the myth but never invent the history.
 - **Suggest, never impose** — the plan adapts only by consent (Realignments are proposals); a missed week is met with a re-laid path, not a penalty.
+- **Identity is earned or bought, never confused** — cosmetics are bought; feats, titles, and story-marks are computed from the ledger with an audit, and no amount of money or RNG touches them.
+- **Beauty renders the ledger** — art (procedural, authored, or generated) illustrates real events and real state; it never invents, obscures, or replaces a readout.
 
 ---
 
@@ -200,3 +202,169 @@ The fusion gains a second axis: **structure** (how training is laid out) and **m
 | Online-only | Offline-first: authored fallback arcs + in-transaction fallback prose; Claude refines lazily when reachable |
 
 The psychology is load-bearing, not garnish: the **Inner Demon's nature is the KiLeak taxonomy** (the obstacle you log is the antagonist you fight), **the entity is the rendered higher self** (future-self vividness), and the Tribulation reframes difficulty as **importance** (identity-based motivation) — which is also, exactly, the manhwa trope.
+
+---
+
+## 11. The Look — "Ink & Ember" (the art direction)
+
+> The current build is honest but austere: dark cards, text, glyphs. Honest is the floor, not the
+> ceiling. The reference is **Yugen's comic-panel UI** — "A New Story Begins…" as an illustrated
+> panel, the current arc as a painted card with a day counter, upcoming arcs glimpsed as covers —
+> fused with the **manhwa page** itself: ink, bloom, foil, speed-lines. Rule zero: **the data never
+> changes; only its costume does.** Beauty is a rendering of the ledger, never a replacement for it.
+
+### 11.1 Principles
+
+1. **Image-first, text-second.** Every story surface (saga header, chapters, feats, trials) is a
+   *panel*: full-bleed art or generative composition with text set INTO it — never a grey card with
+   a title on top. The Quest Log keeps its instrument-panel clarity; the Chronicle becomes a comic.
+2. **One world, four inks.** The void-dark base (`void0/1/2`) stays — it is the paper. Each saga
+   style brings its own ink + accent system that tints *everything* while that saga is active:
+   - **Murim** — ink-wash blacks, vermillion seal-red `#e23d28`, brushed gold; cloud-and-mountain
+     linework; chapter titles like hanging scrolls with a red seal stamp.
+   - **Isekai** — holographic system-blue `#5ac8ff` on deep navy; translucent "system glass" panels
+     with scanline shimmer; status-window chrome (the Solo Leveling material).
+   - **Tower** — brass `#c8963c` + verdigris `#3f8f7a`; architectural etchings, floor-number plates,
+     elevator-gate motifs.
+   - **Regression** — dusk-violet `#7a5cff` + ember `#ff7a18`; double-exposure imagery (the old
+     timeline ghosting behind the new), clock and hourglass fragments.
+3. **The week has weather.** Phase grading tints the whole app subtly: **Gathering** = dawn greys,
+   soft light, low contrast; **Tribulation** = storm — deeper blacks, harder rim-light, faster
+   particle fields; **Quieting** = pre-dawn stillness — desaturated, slow, wide letterboxing. The
+   user *feels* where they are in the plan before reading a word.
+4. **Materials, not flat fills.** Three named materials used everywhere: **system-glass** (quest
+   chips, HUD chrome — translucent, blurred, hairline-edged), **ink-wash** (story panels — layered
+   gradient blooms with paper grain), **foil** (gates, trophies, titles — angular gold sheen that
+   sweeps on device tilt / on focus). Locked things are **silhouette + grain**, never grey boxes.
+5. **Typography is staging.** Chapter/arc titles get a display brush-serif (licensed or variable
+   axis), set large, panel-style with the style's seal/sigil; the Nano/system voice is mono-spaced
+   inside system-glass; body text keeps the current humanist scale. Numerals that matter (reps,
+   countdowns, hammer) get a tabular display cut and count up/down — numbers are protagonists here.
+6. **Motion is panel grammar.** Space transitions stay ≤250ms springs, but story surfaces adopt
+   comic grammar: chapter unlock = the panel **slides in with an ink bloom** and a single frame of
+   white; a fulfilled quest stamps a vermillion seal with a paper-thud haptic; a Gate clear fires
+   speed-lines from the entity; a realm crossing is a full-bleed splash page. Every beat has a
+   reduce-motion variant (a quiet crossfade + the same haptic) — invariant #7 is also an aesthetic.
+
+### 11.2 The art pipeline — three honest tiers
+
+The repo's standing doctrine — *fallbacks are real, authored art drops in additively* — extends to
+beauty itself:
+
+| Tier | What renders | Cost |
+|---|---|---|
+| **P0 — Procedural beauty (the floor, ships first)** | Generative panel compositions seeded **deterministically from the chapter's real `unlockedBy` event** (seed = event hash): ink-bloom fields, particle constellations, the style's palette + motifs, the entity's silhouette composited in. No two chapters look alike; none need an artist; offline always renders. The same engine skins feat medallions and trial covers. | code only |
+| **P1 — Authored sets** | Per-style illustration kits: 1 arc cover + 10 beat panels + 12 feat medallions + UI motifs per style. Authored once, slotted by `styleKey × beatKey`, recolored by palette. | art budget, additive |
+| **P2 — Generated covers (optional, flagged)** | Style-locked AI cover art per saga (the personalized "Yugen cover": *your* demon's silhouette, *your* higher self), generated at forge time, cached forever, P0 as fallback. Art is flavor — never structure, never required, never invents events (it illustrates the synopsis only). | API cost, cached |
+
+**Gate for the whole direction:** screenshot the Chronicle cold (no authored art installed) — if it
+isn't beautiful at P0, the procedural engine isn't done. Yugen's bar, met without Yugen's art team.
+
+---
+
+## 12. The Hall of Feats — achievements as earned identity
+
+Achievements done lazily are a checklist. Done in-world, they are what progression fiction calls
+**titles** — epithets the world bestows because of what you verifiably did ("Sword Demon", "the
+Unbroken"). VOIDBORN already has the only honest substrate for this: the append-only ledger.
+
+### 12.1 Feats
+
+A **Feat** is a named accomplishment **computed from the ledger** — never granted, never bought,
+never random. Definitions are versioned code constants (`constants/feats.ts` mirrored server-side,
+like realms and saga templates); each award stores an **`earnedBy` audit** (the exact rows/values
+that satisfied it), the same honesty contract as saga chapters.
+
+| Family | Examples (condition → feat) |
+|---|---|
+| **Iron** (volume) | first 1,000 hammer → *First Thousand* · 10k → *Iron Tide* · a single 500+ session → *One Sitting* |
+| **Tempo** (consistency) | 7-day streak → *Week of the Hammer* · 30 → *Iron Month* · 100 → **the Unbroken** |
+| **Gates** (assessment) | first Gate → *Gatecrasher* · every Gate in a trial → *Warden's Respect* · a Breakthrough Gate → *Threshold* |
+| **Demon** (the war within) | first ward held → *First Stand* · 10 ward-holds → *Demonslayer* · a week with zero leaks of your demon's nature → *Quiet Mind* |
+| **Path** (trials) | first trial completed → *Pathwalker* · a chained Open Path kept 4+ weeks → *the Long Road* · 3 trials chained → *Trailblazer* |
+| **Realm** (ascension) | each realm crossing is automatically a feat (the shrines, formalized) |
+| **Return** (the comeback — celebrated, never shamed) | trained after 30+ silent days → **the Returner** · rebuilt a 7-streak after a break → *Reforged* |
+| **Hidden** (the manhwa "hidden piece") | category disclosed, conditions secret: dawn sessions, trained on your birthday, a perfect Quieting… surprise is the reward |
+
+### 12.2 Titles
+
+Completing feat sets confers a **Title** — one equippable epithet (`activeTitleKey`) rendered under
+the practitioner's name **everywhere** (Domain, Chronicle, future social), with a micro-effect on
+the entity (a one-off aura shimmer in the title's hue — expression, never a stat). Titles are the
+achievement system wearing the identity system's clothes: PoGo's "favorite badge," murim's epithet,
+and the self-perception loop ("I am *the Unbroken*") in one mechanic. **Never purchasable, never
+gacha, additive-only** — they are the proof layer of the free progression spine.
+
+### 12.3 In the Chronicle
+
+The Chronicle gains the **Hall of Feats** between Turning Points and Monuments: feats render as
+**medallion panels** (P0 generative seals; P1 authored medallions) — earned = full ink + foil sweep;
+unearned = silhouette + grain with the condition as a tease (Zeigarnik, consistent everywhere);
+Hidden feats show only a veiled medallion count. Earning one fires `feat_earned` into the saga
+engine (a real event — it can unlock Hidden chapters), stamps the Turning Points timeline, plays a
+seal-stamp set-piece, and is cited by the Recap Episode. The Voice gets a `feat` occasion.
+
+**Data sketch (for the build phase):** `PractitionerFeat` (practitionerId, featKey, earnedAt,
+earnedBy Json) + `activeTitleKey String?` on Practitioner; feat *definitions and progress are never
+stored* — recomputed from the ledger (`lib/feats.ts`, pure, unit-tested), awarded transactionally in
+the same hooks that advance the saga.
+
+---
+
+## 13. The Entity, Embodied — and the Demon given a body
+
+The entity is the product's soul, and today it is a homebody: alive on the Domain, absent
+everywhere else. Strengthening it means four upgrades and one new character.
+
+### 13.1 Presence — one being, every screen
+
+The entity stops being a screen's content and becomes the **shell's resident**: a persistent
+presence layer (rendered once, composited per-space — the render-split invariant already allows
+exactly this) that scales per context: full-stage in the Domain · perched small at the corner of
+the Quest Log, *turning to look at Today's Quest* · curled beside the prose in the Chronicle,
+ear-flicking as you read · mirrored in the Chamber. It travels between spaces with the swipe — the
+navigation itself becomes "the being follows you."
+
+### 13.2 The mood engine — behavior from the ledger
+
+`demeanor` graduates from a stored label to a computed **mood**, derived (never stored) from real
+state: readiness + streak + time-of-day + recent events + Bond. Moods select idle sets and micro-
+behaviors: **dawn-stretch** (first open of the day) · **focused** (an unfulfilled quest today,
+pre-evening) · **proud loop** (quest fulfilled — holds the pose the rest of the day) · **vigilant**
+(the demon's hour approaches — see 13.4) · **dormant-soft** (long absence: asleep, never sulking —
+it wakes *delighted*, which is the entire ethics of the comeback) · **corrupted** (unchanged) ·
+**reading** (Chronicle open). Bond level unlocks deeper idle variations (already specced — now they
+have somewhere to live).
+
+### 13.3 The reaction vocabulary — every event lands on the body
+
+The juice spec gains a third channel: haptic + audio + **entity reaction**. Quest fulfilled = strike
+pose + seal stamp · Gate cleared = breakthrough stance + speed-lines · chapter unlock = the entity
+turns toward the panel as the ink blooms · realm crossing = the full evolution splash · feat earned
+= it *wears* the shimmer · ward held = see below. Implementation: a small trigger-input contract on
+the artboard (`react_quest`, `react_gate`, `react_chapter`, `react_feat`, `react_ward`), with the
+**FallbackEntity upgraded to the same contract** — the procedural being (P0) must perform the whole
+vocabulary in particles and posture, so the soul ships before the art does.
+
+### 13.4 The Demon, embodied
+
+The Inner Demon has a name and a nature — give it a **body**: a small shadow-creature sharing the
+domain, rendered in the saga style's ink. It is *truthful theater*, driven only by ledger reality:
+it **looms slightly** in your stated trouble-hours and after logged leaks; it **recoils** when a
+ward holds; it **shrinks** as Demon-family feats accumulate; after *Demonslayer*, it keeps a wary
+distance — visibly diminished, never gone (honest psychology: demons are managed, not deleted).
+Tapping it shows its dossier — your own WOOP words, the ward, the win/loss ledger. The fantasy of
+**facing** the obstacle, rendered from nothing but the user's real data. (Reduce-motion: the demon
+becomes a still shadow with state shown by size alone.)
+
+### 13.5 Story-marks — growth you can see and never buy
+
+Surviving the story leaves **marks** on the entity: a hairline scar-glyph per Breakthrough Gate, a
+faint seal per completed trial, an ember in the aura per title held. Marks are a resolver layer
+(`storyMarks`, between lineage and cosmetics), **earned-only, additive-only, opt-out-able** — the
+visual ledger of the climb, readable at a glance like a veteran's body. Cosmetics re-skin; marks
+testify.
+
+**Entity input contract (v2, for the build phase):** existing inputs + `mood`, `readiness`,
+`demonProximity`, `demonScale`, and the five `react_*` triggers — identical contract for Rive
+artboards and the procedural FallbackEntity, unit-tested at the bridge like everything else.
