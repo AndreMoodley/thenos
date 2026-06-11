@@ -126,6 +126,9 @@ You are building **VOIDBORN** from zero: a single-player ascension game that fus
 > replaces a readout.** The data never changes; only its costume does.
 
 ## PHASE V1 — Ink & Ember (the look)
+- **First, the spine:** run the `docs/EXPERIENCE_STANDARD.md §10` punch list (skeletons, surfaced
+  errors/offline/pending states, arm-confirm destructives, token lint, virtualized lists) — the
+  seamless feel precedes the costume; the §9 audit becomes the PR checklist from here on.
 - **P0 procedural panel engine** (`src/lib/panels/`): deterministic generative compositions seeded
   from a chapter's `unlockedBy` / a feat's `earnedBy` hash — ink-bloom fields, particle
   constellations, style motifs, entity silhouette composited; one renderer skins chapters, feats,
