@@ -1,6 +1,6 @@
 # CLAUDE.md — VOIDBORN
 
-Project memory for Claude Code. Read this before touching the codebase. `README.md` is the spec, `GAME_DESIGN.md` is the interface-fusion design, `BUILD_PROMPT.md` is the build order, `docs/CONCEPT_GRAPH.md` is the system anatomy (how every concept connects + the five laws + the seams), `docs/EXPERIENCE_STANDARD.md` is the seamlessness bar (latency contract, eight states, motion grammar, voice rules, the release audit), `NANO_VISION.md` is the far horizon. **This is a greenfield game** — clean New-Architecture build, no legacy/migration baggage.
+Project memory for Claude Code. Read this before touching the codebase. `README.md` is the spec, `GAME_DESIGN.md` is the interface-fusion design, `BUILD_PROMPT.md` is the build order, `docs/CONCEPT_GRAPH.md` is the system anatomy (how every concept connects + the six laws + the seams), `docs/EXPERIENCE_STANDARD.md` is the seamlessness bar (latency contract, eight states, motion grammar, voice rules, the release audit), `NANO_VISION.md` is the far horizon. **This is a greenfield game** — clean New-Architecture build, no legacy/migration baggage.
 
 ---
 
@@ -43,7 +43,8 @@ voidborn/                  # Expo app (TS, Expo Router)
 ├── src/api/               # http client + offline queue/flush
 ├── src/constants/         # realms.ts, forms.ts, cosmetics.ts, theme.ts (+domainConfig),
 │                          #   trials.ts (phases/kinds + UTC helpers), saga.ts (styles/beats),
-│                          #   feats.ts (feat/title defs — V2), inks.ts (style palettes — V1)
+│                          #   feats.ts (feat/title defs — V2), inks.ts (style palettes — V1),
+│                          #   arts.ts (families/units/weights — A1), inner.ts (protocols — A2)
 ├── src/hooks/             # useEntityInputs, useOfflineSync, useCinematic,
 │                          #   useAscensionWatcher, useChapterWatcher
 ├── src/lib/               # device-tier + reduce-motion, haptics/audio juice, persist
@@ -105,6 +106,7 @@ npx prisma generate    # after schema changes
 14. **Adaptation is suggest-only.** A `TrialRealignment` changes nothing until the practitioner accepts; accept rewrites only future, **unfulfilled** quests. The past is immutable; regeneration never touches a fulfilled row.
 15. **Trials and Sagas are progression ⇒ FREE forever.** No priceModel on any of their models, nothing gacha, additive-only (reforging archives the old saga; abandoning a trial cancels its vow — never `broken`, no corruption for re-planning).
 16. **Feats/Titles/story-marks are COMPUTED from the ledger, never granted.** Definitions are versioned code constants; every award stores an `earnedBy` audit; progress is never stored (recompute like realms). Titles (`activeTitleKey`) equip only if earned. **Beauty renders the ledger:** all art (P0 procedural — seeded from real `unlockedBy`/`earnedBy` events — P1 authored, P2 generated) illustrates real events/state and never invents, obscures, or replaces a readout. Entity mood is computed, never stored; the embodied Demon's size/distance derive only from real leak/ward rows.
+17. **The myth is a mechanism; the world is self-contained.** Every in-world ritual wraps a real, evidence-based practice (breath pacing, motor imagery, attentional-focus cues, interoception — citations live in `GAME_DESIGN.md §15`, NEVER in product copy). UI strings never name external fiction/franchises/studies and never make medical/diagnostic claims; the Voice cites only the practitioner's own data. Inner sessions log at `reps: 0` and can NEVER strike — inner work amplifies, the body alone swings the hammer. Arts are additive organization: one entity, one hammerCount (per-family weights, versioned), `artId` columns optional, per-Art mastery always derived (generalizes `originArtMastery`). One Focus Art at a time; switching focus is consent-gated.
 
 ---
 
@@ -125,6 +127,9 @@ Soft paywall: free Void form + full evolution + Dojo/Calendar/Trophy Hall + a fr
 ## Trials & Saga (the two engines)
 **Trial** (Runna-modeled): goal → `generateProtocol()` lays Gathering → Tribulation → Quieting weeks of `PlannedSession`s around the **Pillar Day**; dials regenerate **future weeks only**; `lib/adherence.ts` proposes suggest-only Realignments; completing a trial keeps its auto-linked major Vow and **chains an Open Path** (never a dead end). **Saga** (Yugen+WOOP-modeled): the **Mirror Rite** captures current self → higher self → **Inner Demon** (nature = `LeakCategory`) → if-then **Ward**; the **Saga Forge** writes a 4-style manhwa/isekai arc (murim/isekai/tower/regression) over the fixed 10-beat skeleton; `advanceSaga()` unlocks chapters in-transaction from real events with fallback prose, Claude refines lazily. Trophy Hall = **The Chronicle** (route unchanged); Calendar = **the Quest Log**; the Domain shows **Today's Quest**.
 
+## The Codex of Arts + the Inner Art (A1–A2, design-specced in GAME_DESIGN §14–15)
+**Codex** (A1): a Practitioner `Art` (name · family body/mind/craft/voice/abstinence · unit · weight · Mastery Vision · status) is the life-project object — it OWNS chained trials, a saga thread, feats, and a ledger slice; Body Arts map 1:1 onto the six modalities (nothing removed); all Arts strike the one hammer; one **Focus Art** holds the prime surfaces; the Codex is the Quest Log's top stratum (no fifth space). **Inner Art** (A2): the guided Begin flow — Gathering Breath (~6/min) → Intent Circulation (imagery) → kind-correct focus cue (internal for flow/surge hypertrophy, external for gate/pillar performance) → the Seal; Stillness quests carry guided body-scan/imagined-training; protocols log as Mind-Art `reps:0` rows that seal ki through the ledger and feed chapters/feats/readiness/the demon. Every step skippable in ≤2 taps.
+
 ## The look + earned identity (V1–V3, design-specced in GAME_DESIGN §11–13)
 **Ink & Ember** (V1): story surfaces are image-first panels — per-style ink systems (murim/isekai/tower/regression), phase grading (Gathering/Tribulation/Quieting tint the app), materials system-glass/ink-wash/foil, panel-grammar motion with reduce-motion variants; **P0 procedural panel engine** (deterministic, event-seeded) must make the Chronicle screenshot-beautiful with zero authored assets — P1 authored kits and P2 generated covers are additive. **Hall of Feats** (V2): `lib/feats.ts` (pure) computes 8 feat families from the ledger; awards write `PractitionerFeat` + `earnedBy` in the saga-advancing hooks; `feat_earned` is a saga event; Titles equip via `activeTitleKey`. **Entity Embodied** (V3): persistent presence layer across spaces; computed mood engine; `react_*` trigger contract with `FallbackEntity` parity; the **embodied Demon** (ledger-driven size/distance); **story-marks** resolver layer between lineage and cosmetics.
 
@@ -141,3 +146,5 @@ Soft paywall: free Void form + full evolution + Dojo/Calendar/Trophy Hall + a fr
 - **V1:** Chronicle screenshot-beautiful at P0 (no authored assets); no readout obscured; reduce-motion variants verified.
 - **V2:** feats recompute identically from the raw ledger; `earnedBy` audit matches; titles equip only if earned; Hidden feats expose a veiled count, never conditions.
 - **V3:** entity present + reactive in all four spaces at 60fps; demon size/distance derive provably from leak/ward rows; story-marks earned-only.
+- **A1:** a v1 account behaves identically as one implicit Body Art (zero-change migration); two concurrent Arts keep one hammer + correct per-Art mastery; focus switch is consent-gated and emits a saga event.
+- **A2:** inner protocols log at `reps:0` with hammer unchanged; protocol completion seals ki via the ledger; no UI string names an external work/study or makes a clinical claim (voice lint passes); every rite step skippable in ≤2 taps.

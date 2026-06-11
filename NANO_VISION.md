@@ -245,6 +245,10 @@ Living Protocol → **N3** HUD layer → **N4** Armed Wards (Android) → **N5**
 AR/voice frontier. The **V1–V3 beautiful-build phases** (`BUILD_PROMPT.md`: Ink & Ember, the Hall of
 Feats, the Entity Embodied — `GAME_DESIGN.md §11–13`) precede or interleave with N0–N2: beauty and
 earned identity are nearer-term than perception, and everything here inherits their art tiers.
+**A1–A2 have since pulled two pillars of this vision forward** (`GAME_DESIGN.md §14–15`): the Arts
+taxonomy + any-goal organization (was N1) ships as the Codex of Arts, and the readiness model (N2)
+gains its honest inputs from the Inner Art's logged protocols — perception (N0) then lands per-Art,
+drafting into an organizational structure that already exists.
 
 **Top risks:** privacy trust (answer: N3, on-device-first, radical transparency) · AI cost/latency
 (answer: N4 — AI at the edges, deterministic core, fallbacks everywhere, as today) · iOS intervention

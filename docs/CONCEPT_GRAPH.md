@@ -7,10 +7,11 @@
 
 ---
 
-## 1. The five laws (the threads every concept hangs on)
+## 1. The six laws (the threads every concept hangs on)
 
-The app coheres because every system — training, plans, story, achievements, entity, economy —
-obeys the same five laws. They are *the* connective tissue; everything in §2 is an instance.
+The app coheres because every system — training, plans, story, achievements, entity, economy, and
+now the Arts and the inner loop — obeys the same six laws. They are *the* connective tissue;
+everything in §2 is an instance.
 
 | # | Law | What it means | Where it's enforced |
 |---|---|---|---|
@@ -19,6 +20,7 @@ obeys the same five laws. They are *the* connective tissue; everything in §2 is
 | **L3** | **Consent gates change** | Nothing restructures the user's world uninvited: Realignments propose, accept mutates; regeneration touches only future-unfulfilled; reforging archives, never deletes. | `routes/trials.ts`, `routes/saga.ts`, invariant #14 |
 | **L4** | **Money buys expression, never progression** | The purchased graph (forms, cosmetics, domains, crystals) and the earned graph (hammer, realms, trials, saga, feats, marks) share exactly one node — the resolver (appearance) — and zero progression edges. | schema (no priceModel on earned models), invariants #8/#15/#16 |
 | **L5** | **Degrade fidelity, never function** | Offline → queue + full cached snapshot. Keyless → authored fallbacks. No art → P0 procedural beauty. Reduce-motion → calm variants. Every floor is *real*, not an apology. | `api/queue.ts`, `/sync/state`, `lib/sagaTemplates.ts`, GAME_DESIGN §11 P0, invariant #7 |
+| **L6** | **The myth is a mechanism; the world is self-contained** | Every in-world ritual wraps a real, evidence-based practice (breath pacing → vagal tone; imagery → neural drive; focus cues → activation/performance; body-scan → interoception). Fiction that doesn't make the user objectively better is cut. Product copy never names external fiction or studies and never makes medical claims — sources live in design docs; the Voice cites only the practitioner's own ledger. | GAME_DESIGN §15, EXPERIENCE_STANDARD §5, invariant #17 |
 
 ---
 
@@ -68,6 +70,46 @@ obeys the same five laws. They are *the* connective tissue; everything in §2 is
           └────────────────  never invents (cache+fallback) — the narrator edge to ALL nodes
 ```
 
+### 2.1 The A-strata — the Arts layer and the inner loop (additive; nothing below moves)
+
+Two strata slot onto the graph without moving a single existing node:
+
+```
+            THE CODEX (A1) — a life, organized              THE INNER LOOP (A2) — ki, made real
+   ┌─────────────────────────────────────────────┐      ┌─────────────────────────────────────────┐
+   │  ART "the Iron Art"   ART "the Written Art" │      │   MIND ──────────────────────► BODY     │
+   │  (family·unit·weight· (Craft: words)        │      │   Gathering Breath (≈6/min → vagal ↑)   │
+   │   Mastery Vision)          ...               │      │   Intent Circulation (imagery → drive)  │
+   │      │ owns                  │ owns          │      │   Press/Send the Ki (focus cue by kind) │
+   │      ▼                       ▼               │      │   The Seal (down-regulation + felt-q)   │
+   │  Trials chain · saga thread · feats ·        │      │      │ logged as Mind-Art sessions      │
+   │  ledger slice → derived mastery curve        │      │      ▼ (reps:0 — NEVER strikes)        │
+   │  (originArtMastery, made plural)             │      │   ki seals · readiness · Inner feats ·  │
+   │      │ all Arts strike ONE hammer            │      │   chapters · the demon recoils          │
+   │      ▼ (per-family weights, versioned)       │      │      ▲                                  │
+   │  hammerCount → REALM (the whole person)      │      │   BODY ─────────────────────► MIND      │
+   └─────────────────────────────────────────────┘      │   (interoception: Stillness body-scan)  │
+                                                          └─────────────────────────────────────────┘
+```
+
+**New edge classes, and why they deepen connectivity rather than widen it:**
+
+- **Ownership edges (A1):** `Art → {Trial, saga thread, feats, ledger slice}` — the Art is an
+  *organizer* of existing nodes, not a new mechanic. The hourglass is untouched: every Art's effort
+  still passes through `logSession`; the hammer stays singular (one being); only *attribution*
+  (`artId`) is added. A v1 account is, retroactively, a person with one implicit Body Art — perfect
+  backward compatibility is the proof the layer is purely organizational.
+- **The mind→body edge (A2):** the first *bidirectional* edge in the graph. Mind work primes body
+  work (breath → arousal, imagery → neural drive, focus cue → activation/expression), and body work
+  trains mind work back (interoception via the body-scan). Mechanically it is humble: inner
+  protocols log as ordinary Mind-Art sessions (`reps:0` law intact), seal ki through the ledger
+  instead of a bare tap, and feed every existing celebration system (chapters, feats, readiness,
+  the demon). The profoundest feature in the app is, structurally, *just more rows* — which is
+  exactly the compliment L1 deserves.
+- **The L6 membrane:** the inner loop is where fiction and evidence fuse, so it is where the
+  self-contained-world rule matters most — the UI speaks doctrine ("press the ki into the muscle"),
+  the design docs hold the citations, and nothing in between leaks.
+
 **Three shapes to notice:**
 
 1. **The hourglass.** Every form of effort — manual log, quest Begin, offline replay, (later)
@@ -94,6 +136,7 @@ file you can open. This trace IS the implementation-areas map in motion:
 | Step | What happens | Where |
 |---|---|---|
 | 1 | Quest card prefills the sheet (`plannedSessionId`, modality, targetReps) | `voidborn/src/components/QuestCard.tsx` → `QuickLogSheet.tsx` |
+| 1.5 | *(A2)* The inner phase: Gathering Breath → Intent Circulation → the kind-correct focus cue — skippable in ≤2 taps, logged as a Mind-Art row when completed | planned guided Begin flow (`GAME_DESIGN §15.2`) |
 | 2 | **Optimistic instant**: hammer/streak/realm recomputed locally, quest marked, ascension staged | `voidborn/src/store/metrics.ts logStrike` (+ `store/trial.ts noteFulfilled`) |
 | 3 | Mutation enqueued with `clientId` (idempotency key), flush attempted | `voidborn/src/api/queue.ts` → `POST /sync/flush` |
 | 4 | **The waist**: one transaction — idempotency check → session row → strike | `server/src/lib/sessionLog.ts` → `lib/metrics.ts applyStrike` |
@@ -128,6 +171,8 @@ That is L5 as a lived path, not a footnote.
 | Feats / titles *(V2)* | `PractitionerFeat`, `activeTitleKey` | `lib/feats.ts` + `constants/feats.ts` | award in the waist | `/feats` | extend `store/saga.ts` or own | Hall of Feats |
 | Entity | `activeFormKey`, presets, `PractitionerEntity` | `resolveManifestation()`, `stageResolver` | — | `/entity/*`, `/cosmetics/*` | `store/characterConfig.ts` | every space; Chamber |
 | Demon *(V3)* | — (derived from leaks/wards/feats) | planned pure derivation | — | serialized | derived | Domain (the body) |
+| Arts / Codex *(A1)* | `Art`, `Trial.artId?`, `VoidSession.artId?` | `lib/arts.ts` + `constants/arts.ts` (families/units/weights, per-Art mastery derived) | focus-switch handler (consent + saga event) | `/arts` (planned) | extend `store/trial.ts` | Codex stratum of the Quest Log; Chronicle braiding |
+| Inner Art *(A2)* | — (Mind-Art `VoidSession`s at `reps:0`) | `constants/inner.ts` (protocols) | rides the waist (seal via ledger) | existing session routes | session flow state | guided Begin flow (`RiteStep`/`BreathGuide`); Stillness quests |
 | Voice / Nano | `CoachReflection` (cache) | `lib/voice.ts` | — | `/coach/reflect` | screen-local | Domain voice card |
 | Economy | catalogs + ownership + `Entitlement` | `lib/gacha.ts` (only RNG) | `routes/premium.ts` | `/companions`, `/premium/*` | `store/premium.ts` | Chamber, summons |
 | Celebration | — | `lib/juice.ts`, cinematic catalog | — | `/cinematics` | `hooks/useCinematic.ts` | CinematicOverlay |
@@ -167,7 +212,8 @@ lands in one of them:
 | **v1 (built)** | The mirror: effort → ledger → realm → entity; vows; economy; Voice | derivation edges | L1, L4 |
 | **T (built)** | The path & the myth: trials structure effort; saga gives it meaning | consent edges (L3) + narrative/audit edges (L2) | L2, L3 |
 | **V (specced)** | The face: panels render audits; feats mint identity; the entity (and demon) embody state | aesthetic-derivation edges (art *from* audits) + earned-identity edges | L1, L2, L4 |
-| **N (vision)** | The symbiote: the world writes drafts (perception), the system speaks into life (HUD/wards), any goal enters the graph (Arts) | sensory edges (world → ledger, confirm-gated) + ambient edges (system → life, consent-armed) | L2 (N1), L3 (N2), L5 (N3) |
+| **A (specced)** | The life & the channel: any Art becomes the goal-object, a whole life organizes into the Codex; the inner loop makes ki a trained mind-body practice | ownership edges (Art → existing systems) + the first bidirectional mind⇄body edge | L1, L3, **L6** |
+| **N (vision)** | The symbiote: the world writes drafts (perception), the system speaks into life (HUD/wards) — perception lands per-Art (A1 pulled the Arts taxonomy forward from N1) | sensory edges (world → ledger, confirm-gated) + ambient edges (system → life, consent-armed) | L2 (N1), L3 (N2), L5 (N3) |
 
 The constant across eras: **no new edge family ever bypasses the waist or breaks a law.** The graph
 grows by adding mirrors and senses around the same small, auditable heart. That is the nature of
@@ -191,3 +237,9 @@ this app: *a ledger of real effort, wearing progressively richer bodies.*
   `canMove` is the human escape hatch. Revisit only with real user pain, not speculation.
 - **AI cost & trust.** Fenced by seam #4; the fallback is always the contract, the model is always
   the upgrade.
+- **Focus dilution (A1).** Many Arts can quietly become a to-do list — the thing the app refuses to
+  be. The structure resists it (ONE Focus Art holds the prime surfaces; resting Arts get heartbeats,
+  not plans), and the metric that matters is per-Art *continuity*, not Art count.
+- **Evidence honesty (A2/L6).** The inner loop's claims must stay inside its citations: training
+  craft, not therapy; amplification, not magic. The fence is structural — inner work logs at
+  `reps:0` and can never strike — so even if the copy ever overreached, the ledger could not.

@@ -174,6 +174,8 @@ The only input is showing up. Everything purchasable is identity and environment
 - **Suggest, never impose** — the plan adapts only by consent (Realignments are proposals); a missed week is met with a re-laid path, not a penalty.
 - **Identity is earned or bought, never confused** — cosmetics are bought; feats, titles, and story-marks are computed from the ledger with an audit, and no amount of money or RNG touches them.
 - **Beauty renders the ledger** — art (procedural, authored, or generated) illustrates real events and real state; it never invents, obscures, or replaces a readout.
+- **The myth is a mechanism** — every in-world ritual wraps a real, evidence-based practice (breath, imagery, attentional focus, interoception); fiction that doesn't make the user objectively better is decoration, and decoration is cut.
+- **The world is self-contained** — product copy never names external fiction or studies; sources live in the design docs, and the Voice cites only the practitioner's own data.
 
 ---
 
@@ -368,3 +370,118 @@ testify.
 **Entity input contract (v2, for the build phase):** existing inputs + `mood`, `readiness`,
 `demonProximity`, `demonScale`, and the five `react_*` triggers — identical contract for Rive
 artboards and the procedural FallbackEntity, unit-tested at the bridge like everything else.
+
+---
+
+## 14. The Codex of Arts — a life, organized
+
+> The reframe: the goal of the app is not "a goal." It is **the Art the practitioner is becoming
+> better at.** A race date passes; an Art is cultivated for life. And a person is never one Art —
+> they are a body being forged, a craft being honed, a mind being stilled. The Codex is where a
+> whole life organizes itself into the app — additively: nothing existing moves, everything
+> existing gains an owner.
+
+### 14.1 The Art is the goal-object
+
+A **Practitioner Art** is a named, long-lived pursuit — the unit of "a project in my life":
+
+- **Family** — which kind of cultivation it is: **Body Arts** (the six existing modalities, mapped
+  1:1 — nothing removed), **Mind Arts** (stillness, breath, study — minutes/pages), **Craft Arts**
+  (writing, music, code — words, pieces, problems), **Voice Arts** (language, social courage —
+  exchanges, attempts), **Abstinence Arts** (clean days held — stillness logic, never strike logic).
+- **A name the practitioner gives it** — "the Iron Art," "the Written Art," "the Quiet Art." Naming
+  is identity work (the same psychology as naming the demon).
+- **A Mastery Vision** — the long-horizon sentence ("deadlift 180kg" / "publish the novel" / "sit
+  one unbroken hour"). Not a deadline — a *direction*. Trials are how the direction becomes weeks.
+- **Its own thread of everything that already exists:** chained Trials, a saga thread, its feats,
+  its slice of the ledger, its derived mastery curve. The Art *owns* instances of the systems we
+  have; it does not replace them.
+
+### 14.2 Focus and cadence — many Arts, one climb
+
+- **One Focus Art** at a time (the Main Quest): it gets the prime surfaces — Today's Quest, the
+  phase weather, the saga's center stage. Focus is a *feature*; ten parallel sprints are a to-do
+  list, which is the thing this app refuses to be.
+- **Resting Arts keep a heartbeat, not a plan:** a light recurring practice cadence (their Open
+  Path trials or single weekly quests) so no Art decays to zero while another is in Tribulation.
+  Switching focus is a consent act (L3) and a saga event — the manhwa "training arc" handoff.
+- **One entity, always.** Every Art strikes the same hammer (per-family unit weights normalize
+  effort — server-authoritative, versioned). The realm remains the measure of the *whole person*;
+  per-Art mastery curves (the generalization of `originArtMastery`, which was always
+  `hammerCount × 0.001` waiting to become plural) measure each pursuit. The being wears all of it:
+  aura threads tint per cultivated Art; story-marks already know which trial minted them.
+
+### 14.3 The Codex surface (depth ≤ 1, nothing moves)
+
+No fifth space. The **Codex** is the Quest Log's top stratum: an in-place Art switcher (cards: name,
+family sigil, mastery curve spark-line, current trial week, next quest) above the existing trial
+panel — one tap focuses an Art, the panel below re-skins. The Chronicle braids threads: chapter
+cards carry their Art's sigil; Turning Points interleave; the Hall of Feats groups by family. The
+Mirror Rite gains one early question — *"Which Art calls first?"* — and the Goal Dialogue
+(NANO N1, pulled forward) classifies free-text dreams into Art + unit + vision.
+
+**Data sketch (build phase):** `Art` (practitionerId, name, family, unit, weight, masteryVision,
+status `focus/active/resting/archived`) · `Trial.artId?` · `VoidSession.artId?` + `amount` in
+art-units (Body Arts keep `modality`+`reps` untouched; the bridge maps them) · saga events gain
+`artId` context. All optional columns, all additive — a v1 practitioner is simply a person with one
+implicit Body Art.
+
+---
+
+## 15. The Inner Art — ki, made real
+
+> The deepest move in the redesign: the world's "inner energy" stops being flavor and becomes a
+> **trained, evidence-based mind-body practice** the app actually teaches. In-world doctrine: *ki
+> is the connection between intent and tissue, and it is trainable.* Out-of-world fact: that is
+> not a metaphor. Motor imagery alone produces measurable strength gains (+13–23% in classic
+> studies — neural drive, not muscle, is the adaptation); attention directed INTO a muscle roughly
+> doubles hypertrophy in trained lifters versus external focus, while external focus wins for
+> expressing performance; six-breaths-per-minute paced breathing measurably raises cardiac vagal
+> activity; body-scan practice trains interoception in weeks. The fiction was describing real
+> machinery all along. We implement the machinery and keep the fiction's name for it.
+
+### 15.1 The doctrine (one law, five protocols)
+
+**In-world:** strikes forge the body; *circulation* forges the channel between mind and body. A
+strike thrown without intent is half a strike. **Out-of-world:** every protocol below is a real,
+cited practice; the skin makes people actually do it.
+
+| Protocol | In-world | The real mechanism | Where it hooks |
+|---|---|---|---|
+| **The Gathering Breath** | "Gather ki before the strike." 60–90s guided slow breath (~6/min) before a session begins | Slow-paced breathing → cardiac vagal activity ↑, arousal regulated to the task | The quest's **Begin** flow, step one — a breath ring in system-glass, haptic-paced |
+| **Intent Circulation** | "Walk the technique along its meridian before the body moves." 20–30s first-person rehearsal of the coming set | Motor imagery / mental rehearsal — neural drive priming; imagery concurrent with training enhances force | Step two of Begin, before the first set; the entity mirrors the rehearsed motion |
+| **Pressing the Ki** | "Press the ki *into* the muscle and hold it there." | **Internal attentional focus** — heightened target-muscle activation; superior hypertrophy in volume work | Cue shown on `flow`/`surge` hypertrophy-type quests during sets |
+| **Sending the Ki** | "Send the ki *through* the target — the body knows the way." | **External attentional focus** — superior force/skill/endurance expression | Cue shown on `gate`/`pillar` performance-type quests — the app picks the right cue per quest kind, which is the actual coaching science |
+| **The Sealing** | "Seal what was forged." 60s down-regulation breath + one felt-sense question after the session | Post-exercise parasympathetic rebound + interoceptive consolidation; closes the loop the Gathering opened | The session's end; this is what the existing **Seal ki** act becomes — earned, not tapped |
+| **Stillness Cultivation** | Rest days are training days for the channel: guided body-scan; *imagined* training when the body must rest | Interoception training; mental practice maintains/builds strength when physical practice pauses (injury, travel, deload) | `stillness` quests stop being empty rest — they carry a 5–10 min guided inner session, still `reps: 0`, still never striking |
+
+### 15.2 What it changes mechanically (all additive)
+
+- **Ki becomes earnable through practice.** Today ki seals by tap (+5). That remains — and completing
+  an inner protocol *is* the canonical seal (the tap becomes the shortcut, the protocol the ritual).
+  Inner sessions log as real `VoidSession`s in the Mind Art (`reps:0` Body-invariant untouched;
+  minutes are the Mind Art's unit) — so the ledger sees the inner work, which means chapters, feats
+  (a new **Inner** feat family: *First Circulation*, *Deep Channel* — 30 sealed sessions, *Unmoved*
+  — a full Quieting with every stillness cultivated), and the demon all respond to it.
+- **Quests gain an inner phase.** Begin → Gathering Breath → Intent Circulation → train (with the
+  kind-correct focus cue) → The Sealing. Every step skippable in two taps forever (L3 — the rite
+  invites, never tolls); the **chain is remembered** ("Sessions sealed this week: 4") because the
+  ledger sees it.
+- **The entity breathes with you.** During the Gathering, the entity's aura contracts and releases
+  on the guide's rhythm (the breath ring IS an entity behavior — V3's mood engine gains a
+  `circulating` state). Readiness (NANO N2) gains its honest inputs: sealed sessions and stillness
+  quality feed the same derivation that paces tomorrow.
+- **The Voice coaches the channel.** New occasion `circulation`: grounded micro-coaching from real
+  rows ("Your sealed sessions rate a point higher this month. The channel is widening.") — never
+  inventing, never clinical.
+
+### 15.3 The honesty fences
+
+- **Supportive, never medical.** The app teaches focus, breath, and rehearsal as *training craft*;
+  it diagnoses nothing, treats nothing, and claims nothing beyond "this is how training is done
+  well." The strong claims live here, in the design docs, with their citations — not in the UI.
+- **The world is self-contained (L6).** Product copy never names its sources — neither the fiction
+  that inspired the skin nor the studies that justify the mechanism. The Voice cites exactly one
+  authority: the practitioner's own ledger.
+- **The fiction never replaces the rep.** Inner work amplifies and maintains; it does not strike.
+  `reps: 0` stays `reps: 0`. The hammer is still only ever swung by the body.

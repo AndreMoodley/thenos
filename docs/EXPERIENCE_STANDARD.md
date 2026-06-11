@@ -64,7 +64,10 @@ The matrix is the review artifact (§9).
 - **The component inventory** — every surface composes from these, and only these:
   `Panel` (story, image-first) · `Card` (instrument) · `Chip` (selection/status) · `Sheet`
   (the one depth-disguise) · `Banner` (realignment/error/offline) · `Medallion` (feats) ·
-  `SystemLine` (the voice) · `StatRow` (records) · `JuicyButton` (already canonical).
+  `SystemLine` (the voice) · `StatRow` (records) · `JuicyButton` (already canonical) ·
+  `RiteStep` (guided sequences: Mirror Rite steps, the inner phase — one instruction, one input,
+  skippable in ≤2 taps, progress dots, all eight states) · `BreathGuide` (the haptic-paced breath
+  ring; the entity's aura is its visual; reduce-motion = expanding text counts, same haptics).
   Each defines anatomy + all eight states once. **A screen needing a new pattern must add it to the
   inventory** — bespoke one-offs are how apps go stale unevenly.
 - **Iconography:** one glyph language. The unicode sigils (◈ ⟁ ⛩ ♛) are brand — keep them — but
@@ -102,7 +105,15 @@ their copy is governed; ours is too:
   - failed fetch: *"The Void is silent. [Reach again]"*
   - forge offline: *"The Forge needs the server — it will fire when the connection holds."* (shipped)
 - **Numbers are protagonists:** tabular numerals, thousands separators, never naked floats.
-- **A banned-words lint** (§9): "error", "failed", "invalid", "oops", "!" in user-facing strings.
+- **The world is self-contained (L6):** product copy never names external fiction, franchises,
+  studies, or researchers — neither the genre works that inspired the skin nor the science that
+  justifies the mechanisms. Doctrine speaks in-world ("press the ki into the muscle"); citations
+  live in the design docs. The Voice's only citable authority is the practitioner's own ledger.
+- **Supportive, never clinical:** no medical, diagnostic, or therapeutic claims anywhere in the UI.
+  The inner protocols are presented as training craft, full stop.
+- **A banned-words lint** (§9): "error", "failed", "invalid", "oops", "!" in user-facing strings —
+  plus external proper nouns (fiction titles, study names) and clinical verbs ("treats", "cures",
+  "diagnoses").
 
 ---
 

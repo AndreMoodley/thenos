@@ -185,4 +185,50 @@ You are building **VOIDBORN** from zero: a single-player ascension game that fus
 
 ---
 
+# The Life Build — the Codex of Arts + the Inner Art
+
+> Design spine: `GAME_DESIGN.md §14–15`. Governing law: invariant 17 — **the myth is a mechanism;
+> the world is self-contained.** All additive: a v1 account must behave identically after every
+> migration in this block.
+
+## PHASE A1 — The Codex of Arts (a life, organized)
+- Schema (additive only): `Art` (practitionerId, name, family `body/mind/craft/voice/abstinence`,
+  unit, weight, masteryVision, status `focus/active/resting/archived`) · optional `artId` on
+  `Trial` and `VoidSession`. Migration backfills ONE implicit Body Art per practitioner and points
+  nothing else — zero behavior change is the proof of additivity.
+- `constants/arts.ts` ⇄ server `lib/arts.ts` (PURE): family defs, unit labels, **versioned
+  per-family weights** normalizing art-units into hammer; per-Art mastery derived from the ledger
+  slice (the plural of `originArtMastery`) — never stored.
+- The Codex stratum at the top of the Quest Log: Art switcher cards (name · family sigil · mastery
+  spark-line · current trial week · next quest); one **Focus Art** (consent-gated switch, emits a
+  saga event); resting Arts hold heartbeat cadences (their Open Path / single weekly quests).
+- Chronicle braiding: chapters/turning points/feats carry their Art's sigil; Hall of Feats groups
+  by family. The Mirror Rite asks *"Which Art calls first?"*; the Goal Dialogue classifies free
+  text → Art + unit + vision (deterministic generator still lays every plan).
+- **Gate:** v1 account migrates with zero behavior change; two Arts run concurrently — one hammer,
+  correct per-Art mastery curves, per-Art trials/saga threads; focus switch consent-gated + saga
+  event; `lib/arts.ts` unit tests green.
+
+## PHASE A2 — The Inner Art (ki, made real)
+- The guided **Begin flow** (`RiteStep` + `BreathGuide` components per EXPERIENCE_STANDARD §3):
+  Gathering Breath (~6/min, haptic-paced, entity aura breathes with it) → Intent Circulation
+  (20–30s first-person rehearsal; the entity mirrors) → train with the **kind-correct focus cue**
+  (internal "press the ki into" on flow/surge hypertrophy quests; external "send the ki through"
+  on gate/pillar performance quests) → **the Seal** (60s down-regulation + one felt-sense question).
+  Every step skippable in ≤2 taps, forever.
+- Stillness quests carry a guided inner session (body-scan / imagined-training, 5–10 min) — still
+  `reps: 0`, still never striking.
+- Ledger integration: completed protocols log as Mind-Art `VoidSession`s (minutes as unit,
+  `reps: 0`); protocol completion IS the canonical ki seal (the +5 tap remains as the shortcut);
+  the **Inner feat family** (*First Circulation* · *Deep Channel* · *Unmoved*) computes from these
+  rows; readiness and the demon read them; Voice gains the `circulation` occasion.
+- **Honesty fences in code:** the voice lint (EXPERIENCE_STANDARD §9.4) extended to external proper
+  nouns + clinical verbs runs in CI over user-facing strings; no inner row can ever create a
+  `StrikeEvent` (assert in the waist; test it).
+- **Gate:** inner sessions ⇒ `reps:0`, hammer unchanged, ki sealed via ledger; chain-of-sealed-
+  sessions renders from real rows; every rite step skippable in ≤2 taps; voice lint green; demo
+  shows a stillness quest carrying a guided session.
+
+---
+
 When you finish reading the three documents, complete the "Before you start" items (including the toolchain-matrix verification) and begin **Phase 0**. Pause for review at each phase boundary.

@@ -42,15 +42,16 @@ Your real-world training is the only fuel. Every strike, sealed ki point, and ke
 9. [The Voice of the Void — AI Coach](#the-voice-of-the-void--ai-coach)
 10. [Trials — the Forged Path](#trials--the-forged-path)
 11. [Saga — the Chronicle](#saga--the-chronicle)
-12. [Rendering & Feel](#rendering--feel)
-13. [System Hardening](#system-hardening)
-14. [Greenfield Stack & Project Layout](#greenfield-stack--project-layout)
-15. [Getting Started From Zero](#getting-started-from-zero)
-16. [Data Model](#data-model)
-17. [API Surface](#api-surface)
-18. [Monetization](#monetization)
-19. [Build Roadmap](#build-roadmap)
-20. [Invariants & Pitfalls](#invariants--pitfalls)
+12. [The Codex of Arts & the Inner Art](#the-codex-of-arts--the-inner-art)
+13. [Rendering & Feel](#rendering--feel)
+14. [System Hardening](#system-hardening)
+15. [Greenfield Stack & Project Layout](#greenfield-stack--project-layout)
+16. [Getting Started From Zero](#getting-started-from-zero)
+17. [Data Model](#data-model)
+18. [API Surface](#api-surface)
+19. [Monetization](#monetization)
+20. [Build Roadmap](#build-roadmap)
+21. [Invariants & Pitfalls](#invariants--pitfalls)
 
 ---
 
@@ -297,6 +298,16 @@ The Yugen-style purpose arc, grounded in real psychology and manhwa/isekai struc
 
 ---
 
+## The Codex of Arts & the Inner Art
+
+> *The goal of the app is not "a goal." It is the Art being cultivated — and a life holds more than one.* (Full design: `GAME_DESIGN.md §14–15`.)
+
+**The Codex of Arts (design spec):** a **Practitioner Art** is the unit of a life-project — a named pursuit ("the Iron Art", "the Written Art") with a **family** (Body — the six modalities mapped 1:1, nothing removed — Mind, Craft, Voice, Abstinence), a unit of effort, and a **Mastery Vision** (a direction, not a deadline). Each Art owns its own thread of everything that already exists: chained Trials, a saga thread, its feats, its ledger slice, its derived mastery curve (the generalization of `originArtMastery`). **One Focus Art** holds the prime surfaces (Today's Quest, phase weather); resting Arts keep a light heartbeat cadence so nothing decays to zero; switching focus is a consent act and a saga event. **One entity, always** — every Art strikes the same hammer through versioned per-family weights; the realm measures the whole person. The Codex surfaces as the Quest Log's top stratum (in-place Art switcher; depth ≤ 1; no fifth space), and the Chronicle braids the threads.
+
+**The Inner Art (design spec):** the world's "inner energy" implemented as **real, evidence-based mind-body training** — slow-paced breathing before sessions (the Gathering Breath), motor-imagery rehearsal (Intent Circulation), kind-correct attentional focus cues during sets (*press the ki into* = internal focus for hypertrophy quests; *send the ki through* = external focus for performance quests), a down-regulating Seal after, and guided body-scan / imagined-training on Stillness quests (which stay `reps: 0` and never strike). Completing protocols **is** the canonical ki seal; inner sessions log as real Mind-Art sessions so chapters, feats (a new **Inner** family), readiness, and the demon all respond to them. Two fences: **supportive, never medical** (the citations live in design docs, never in the UI), and **the world is self-contained** (product copy never names external fiction or studies — the Voice cites only the practitioner's own ledger).
+
+---
+
 ## Rendering & Feel
 
 A **hybrid render stack**, each engine for what it does best:
@@ -432,6 +443,8 @@ Realm and evolution **stage are never stored**; `hammerCount` is reconcilable fr
 
 **Feats & Titles (free forever — design spec):** `PractitionerFeat` (featKey, earnedAt, **earnedBy JSON — the ledger audit**; `@@unique([practitionerId, featKey])`) · `activeTitleKey String?` on `Practitioner`. Feat *definitions* are versioned code constants (`constants/feats.ts` + server `lib/feats.ts`, pure) and **progress is never stored** — recomputed from the ledger; awards happen transactionally in the same hooks that advance the saga.
 
+**Arts (design spec — all additive, optional columns):** `Art` (practitionerId, name, family `body/mind/craft/voice/abstinence`, unit, weight, masteryVision, status `focus/active/resting/archived`) · `Trial.artId?` · `VoidSession.artId?` (Body Arts keep `modality`+`reps` untouched; per-family weights normalize units into hammer, server-authoritative + versioned). Per-Art mastery is **derived from the ledger slice** — never stored.
+
 **Systems:** `Bond` (value, lastPresenceDate) · `Season` (seasonKey, startsAt, endsAt — limited-time drops) · `Sect` / `SectMember` (social roadmap).
 
 ---
@@ -498,6 +511,8 @@ Ship the cheap, high-impact thing first. Each phase ships independently.
 | **V1 — Ink & Ember (the look)** | P0 procedural panel engine (event-seeded generative art for chapters/feats/covers); style ink systems + phase grading; system-glass/ink-wash/foil materials; panel-grammar motion + reduce-motion variants. | The Chronicle is screenshot-beautiful **with zero authored assets**; same data, no readout obscured; calm variants verified. |
 | **V2 — Hall of Feats & Titles** | `lib/feats.ts` (pure, unit-tested) + `PractitionerFeat` + award hooks; `/feats` routes; Hall of Feats medallions in the Chronicle; `activeTitleKey` rendered everywhere; `feat_earned` saga event + Voice occasion. | Feats recompute identically from the raw ledger (audit matches); nothing grants a feat but ledger truth; demo shows earned + teased + veiled-Hidden medallions. |
 | **V3 — The Entity, Embodied** | Persistent presence layer across spaces; mood engine (computed); `react_*` trigger contract on Rive + `FallbackEntity` parity; the embodied Demon (ledger-driven); story-marks resolver layer. | Entity present + reactive in all four spaces at 60fps; demon size/distance provably derived from real leak/ward rows; marks earned-only; reduce-motion stills honored. |
+| **A1 — The Codex of Arts** | `Art` model + per-family weights; `Trial.artId`/`VoidSession.artId`; Codex stratum in the Quest Log (Art switcher); Chronicle thread braiding; Goal Dialogue intake (free text → Art + unit + vision). | A v1 account migrates as one implicit Body Art with zero behavior change; two Arts run concurrently (one Focus) with correct per-Art mastery + unified hammer; switching focus is consent-gated + a saga event. |
+| **A2 — The Inner Art** | Guided Begin flow (Gathering Breath → Intent Circulation → train with kind-correct focus cue → the Seal); Stillness quests carry guided inner sessions; inner sessions log as Mind-Art rows; Inner feat family; `circulating` entity state; Voice `circulation` occasion. | Every step skippable in ≤2 taps; protocol completion seals ki via the ledger (tap-seal still works); stillness stays `reps:0`/no-strike; no medical claims in any string; sealed-session chain visible from real rows. |
 
 **Top risks:** art cost (Form × 7 stages) → ship one fully-staged form first, fund the rest from revenue; 3D on low-end Android → DRACO + baked light + on-demand + 2.5D fallback; scope for a solo dev → the phasing lets you stop after Phase 3 with a genuinely differentiated game.
 
@@ -518,6 +533,7 @@ Ship the cheap, high-impact thing first. Each phase ships independently.
 11. **Adaptation is suggest-only.** A Realignment changes nothing until the practitioner accepts; accept rewrites only future, unfulfilled quests. The past is immutable.
 12. **Trials and Sagas are progression ⇒ free forever.** No priceModel on any of their models, nothing gacha, additive-only (reforging archives, never deletes).
 13. **Feats, Titles, and story-marks are computed from the ledger** with an `earnedBy` audit — never granted, sold, or randomized; progress is never stored. Beauty (procedural/authored/generated art) renders real events and state — it never invents, obscures, or replaces a readout.
+14. **The myth is a mechanism, and the world is self-contained.** Every in-world ritual wraps a real, evidence-based practice (breath pacing, motor imagery, attentional focus, interoception) — and product copy never names external fiction or studies, never makes medical claims, and cites only the practitioner's own data. Inner work amplifies and maintains; it never strikes (`reps: 0` stays law). Arts are additive organization: one entity, one hammer, per-Art mastery always derived.
 
 ---
 
