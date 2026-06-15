@@ -1,6 +1,6 @@
 # CLAUDE.md — VOIDBORN
 
-Project memory for Claude Code. Read this before touching the codebase. `README.md` is the spec, `GAME_DESIGN.md` is the interface-fusion design, `BUILD_PROMPT.md` is the build order, `docs/CONCEPT_GRAPH.md` is the system anatomy (how every concept connects + the six laws + the seams), `docs/EXPERIENCE_STANDARD.md` is the seamlessness bar (latency contract, eight states, motion grammar, voice rules, the release audit), `NANO_VISION.md` is the far horizon. **This is a greenfield game** — clean New-Architecture build, no legacy/migration baggage.
+Project memory for Claude Code. Read this before touching the codebase. `README.md` is the spec, `GAME_DESIGN.md` is the interface-fusion design, `BUILD_PROMPT.md` is the build order, `docs/MASTER_BLUEPRINT.md` is the integration map (all interconnections + the modern UI/UX reframe + the Gantt-charted roadmap; read it to see the whole), `docs/CONCEPT_GRAPH.md` is the system anatomy (how every concept connects + the six laws + the seams), `docs/EXPERIENCE_STANDARD.md` is the seamlessness bar (latency contract, eight states, motion grammar, voice rules, the release audit), `NANO_VISION.md` is the far horizon. **This is a greenfield game** — clean New-Architecture build, no legacy/migration baggage.
 
 ---
 
