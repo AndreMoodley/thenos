@@ -231,4 +231,53 @@ You are building **VOIDBORN** from zero: a single-player ascension game that fus
 
 ---
 
+# The Ascension Reform — Standards, the Proving & the Cohort
+
+> Design spine: `GAME_DESIGN.md §16`. Governing law: invariant 18 — **ascension is standard-gated and
+> community-verified, never bought, spoofed, or stored.** All additive: a v1 account keeps its depth
+> realm at `claimed` standing — **zero demotion** is the proof of additivity (the A-block rule).
+
+## PHASE S1 — Standards, the Proving & plausibility (the engine)
+- `constants/standards.ts` ⇄ server `lib/standards.ts` (PURE, unit-tested): per-Art-family
+  **normalization function** (raw performance + context → one comparable **Standing Score**; a
+  DOTS-style coefficient for strength relative to bodyweight, age-graded pace for cardio, sustained
+  focus for Mind Arts…) → **percentile tier bands** → the seven realms; and `realmFor(hammerCount,
+  provings)` returning `{ depthRealm, provenRealm, realm, atThreshold, standing, nextStandard }` —
+  the generalization of `realmForHammerCount`, **still never stored**.
+- Schema (additive, append-only): `ProvingEvent` (practitionerId, realmIndex, artId, standardKey,
+  standingScore, attestation `claimed/corroborated/witnessed/certified`, evidence JSON, occurredAt);
+  `StrikeEvent` gains `source`/`attestation` (weights Standing, never depth — `hammerCount` stays
+  Σ `amount`). Migration writes NO provings — every existing practitioner sits at `claimed` standing
+  for their current depth realm (zero behavior change).
+- **A Gate is a Proving:** the Trial's Gates and the Breakthrough Gate record `ProvingEvent`s; a Trial
+  can target a Standard; the generator paces toward it. The **plausibility engine** (pure,
+  server-side) flags efforts inconsistent with the practitioner's own history/biometrics — flagged
+  effort still builds depth but is held out of Provings until corroborated/witnessed.
+- The **Threshold/Bottleneck** state (`depthRealm > provenRealm`): a new entity mood `at_threshold`;
+  the Voice's `gate` occasion advises *when* to attempt (readiness-aware); the Demon swells.
+- **Gate:** `realmFor` recomputes identically from `hammerCount` + provings (v1 = `claimed`, zero
+  demotion); a self-attested, plausible Proving is valid offline (sensor-optional floor); manual junk
+  volume raises depth but cannot cross a Threshold; impossible efforts are held out of Provings;
+  Standards/Provings carry no priceModel; `lib/standards.ts` + plausibility unit tests green.
+
+## PHASE S2 — The Cohort & the Sect (community-verified belonging)
+- **Corroboration:** HealthKit/Health Connect workouts + HR/strain plausibility raise a Proving from
+  `claimed` to `corroborated` (the Bevel-metrics lie-detector); **witness:** a Sect peer co-signs a
+  Proving (`witnessed`); **certified:** a real event/meet/test reference. Consent-gated, sensor-
+  optional — corroboration brightens Standing, never gates it.
+- `Sect.entryStandard` (the existing `Sect`/`SectMember` models gain the requirement): joining
+  requires a met Standard — **the literal "meet the requirement to join."** Inside: belonging +
+  mutual witnessing of Provings + shared trials. Sect entry is never sold (L4).
+- The **Cohort** belonging surface (derived: peers who proved a realm in an Art) — a place of equals
+  and mutual witness, **not a ladder**; Standing marks render in the Chronicle (a verified seal on
+  the realm) and on the entity (a story-mark per certified Proving).
+- Feats/Titles: meeting a Standard, a first witnessed Proving, founding/joining a Sect → feats;
+  titles like *the Proven*, *Elite of the Iron Art*. The Saga's breakthrough beat keys off the
+  Proving; failing forward from the Threshold is a Regression-adjacent beat, never a punishment.
+- **Gate:** Sect entry requires a met, attested Standard (never purchasable); witnessing is
+  consent-based and itself attested; the Cohort exposes shared tiers but **no competitive ranking**;
+  a phone-only practitioner can still reach `claimed`/`certified` (via a real event) without sensors.
+
+---
+
 When you finish reading the three documents, complete the "Before you start" items (including the toolchain-matrix verification) and begin **Phase 0**. Pause for review at each phase boundary.

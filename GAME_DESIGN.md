@@ -485,3 +485,149 @@ cited practice; the skin makes people actually do it.
   authority: the practitioner's own ledger.
 - **The fiction never replaces the rep.** Inner work amplifies and maintains; it does not strike.
   `reps: 0` stays `reps: 0`. The hammer is still only ever swung by the body.
+
+---
+
+## 16. The Standard, the Proving & the Cohort — ascension you have to *earn into*
+
+> The flaw being fixed: ascension today is **cumulative self-reported volume** — grind enough
+> manually-entered reps, cross a number, evolve. That is gameable and, worse, *meaningless against
+> reality*: a thousand junk reps is not strength. The real world doesn't work that way. A powerlifter
+> doesn't enter a division by claiming volume — they **meet a standard, on the platform, witnessed**.
+> Strength is *normed to a community* (your lift relative to your bodyweight, as a percentile tier:
+> novice → intermediate → advanced → elite). THENOS adopts exactly this: **you don't accumulate your
+> way into a realm; you prove your way in.** And this doesn't dilute the identity — it is the most
+> xianxia idea there is: a cultivator amasses qi but **stalls at a bottleneck**, unable to rise until
+> they break through a **tribulation**. We had the volume axis; this adds the breakthrough axis the
+> genre was always about.
+
+### 16.1 The two axes of a realm (identity preserved, then deepened)
+
+A realm now has **depth** (your foundation) and **Standing** (what you've proven) — and crucially,
+*nobody is ever demoted*; this is additive like everything else (`§14` A1's zero-change rule).
+
+- **`depthRealm`** — `realmForHammerCount(hammerCount)`, **exactly as today** (invariant #1, untouched).
+  Cumulative effort still builds your foundation, and your foundation is yours forever. Manual logging
+  still matters — it is how you *train toward* a standard.
+- **`provenRealm`** — the highest realm whose **Standard** you've met in an **attested Proving**
+  (from append-only `ProvingEvent`s). Always ≤ `depthRealm` (you cannot prove past your foundation —
+  the Standard demands the depth too).
+- **At the Threshold (the Bottleneck)** — when `depthRealm > provenRealm`: you have the qi, the gate
+  is open, the breakthrough awaits. This is a *celebrated, legible state*, not a lack — the entity
+  strains against a ceiling, the Voice says the foundation is stable, the Demon looms largest (the
+  heart-demon of doubt before a breakthrough is, again, exactly the genre).
+- **Standing** — the *attestation grade* of your current realm: `claimed` (depth only) →
+  `corroborated` (health-data plausible) → `witnessed` (a Sect peer co-signed) → `certified`
+  (a real event/meet/test). The realm's **Cohort**, its **verified mark**, Sect-eligibility, and the
+  saga's Breakthrough chapter all key off **proven** standing — not raw volume.
+
+`realm` is **still never stored** — it derives from two append-only, reconcilable ledger inputs
+(strikes + provings) via a pure function (`lib/standards.ts realmFor()`, the generalization of
+`realmForHammerCount`). Invariant #1 holds; invariant #2 gets *stronger* (a proving is far harder to
+spoof than a typed number). Grandfathering: existing depth = `claimed` standing — you keep your
+realm, and you're *invited* to prove it. Zero demotion, zero migration pain.
+
+### 16.2 The Standard — community-normed, per Art, generalizable
+
+A **Standard** is the threshold to prove a realm in a given Art — and it is **normed to the
+community of practitioners of that Art**, the way strength standards are normed to bodyweight and
+population percentiles, not pulled from the air.
+
+- **Normalization (the DOTS/Wilks lesson).** Each Art family carries a pure **normalization
+  function** that turns a raw performance into one comparable **Standing Score**, fairly across
+  bodies and contexts: Body/Iron Arts → a strength score relative to bodyweight (a DOTS-style
+  coefficient); Cardio → an age-graded pace / efficiency score; Mind Arts → sustained
+  focus-duration under a fixed protocol; Craft → verified output cadence; Abstinence → clean-streak
+  length. One score, comparable within an Art.
+- **Tiers as percentiles (not arbitrary counts).** The score bands into the **seven realms** by
+  community percentile — Foundation … Divine Master become *competence tiers* ("you lift/run/sit
+  among the top N% who train this Art"), the way "Elite" means a real place in a real distribution.
+  The realm thresholds (`0 / 1,500 / …`) remain the **depth** ladder; the **Standard** is the
+  *demonstrated* ladder layered over it. (The numeric depth thresholds stay in `constants/realms.ts`;
+  the Standard bands live versioned in `constants/standards.ts`, recomputed, never stored.)
+- **The Proving** — the act of meeting a Standard, recorded as an append-only `ProvingEvent`
+  (`realmIndex`, `artId`, `standardKey`, `standingScore`, `attestation`, `evidence` JSON,
+  `occurredAt`). It is a special, witnessed kind of effort — **this is what a `Gate` becomes**: the
+  Trial's Gates (and the Breakthrough Gate, `§10`) are *Provings*. The structure already existed; we
+  are giving Gates teeth. A Trial can be *aimed* at a Proving ("reach the Tempered Standard"), and the
+  generator builds the path to it.
+
+### 16.3 Attestation — earned, verified, still sensor-optional (the Strava lesson)
+
+How a claim becomes trustworthy without locking out the phone-only user, modeled on how real
+communities keep leaderboards honest (automated plausibility + community witness + official
+verification):
+
+| Grade | How it's attested | What it unlocks |
+|---|---|---|
+| **claimed** | self-logged, internally consistent with history | builds depth; the floor for a Proving (a steady, plausible self-attested Proving is valid — sensor-optional, L5/N3 preserved) |
+| **corroborated** | health-data plausibility check passes (HealthKit/Health Connect workout, HR/strain consistent — *Bevel's metrics as the lie-detector*) | a verified mark on the Standing; impossible efforts (à la Strava's auto-flag) are held out of Provings until resolved |
+| **witnessed** | a Sect peer co-signs, or done in a verified group session | required for the higher realms; the community *is* the verification |
+| **certified** | a real meet / event / proctored test logged with its reference | the strongest Standing; a marquee saga beat and feat |
+
+The **plausibility engine** (pure, server-side, the Strava-ML analogue) flags efforts that contradict
+the practitioner's own history and biometrics: flagged effort still builds *depth* but cannot count
+toward a *Proving* until corroborated or witnessed. Verification is therefore an **anti-spoof and an
+amplifier** — never a paywall, never a hard sensor-gate. You can ascend phone-only on consistent,
+plausible self-attestation; you ascend *with a brighter mark* when the community or your body
+co-signs.
+
+### 16.4 The Cohort & the Sect — "you must meet the requirement to join"
+
+This is the community the request asks for — built as **belonging, not ranking** (the standing
+guardrail, `§9`):
+
+- **The Cohort** (automatic, derived, belonging): everyone who has *proven* a given realm in a given
+  Art is, by that fact, of one cohort — peers who met the same bar. You "join" it the instant you
+  prove. It is a place of mutual witness and shared language ("we who reached Forming"), shown as a
+  cohort *of equals*, never a head-to-head ladder. No PvP, no rank-combat — the standing identity
+  ("the only opponent is yesterday's self") is intact; the cohort is who you stand *beside*.
+- **The Sect / Guild** (opt-in, `entryStandard`): the existing `Sect` model gains an **entry
+  Standard** — a self-set requirement to join ("the Tempered Iron Sect: prove Tempered in a Body
+  Art"; "the Dawn Cohort: a 30-day clean Abstinence Standing"). **This is the literal "meet the
+  requirement to join."** Inside, Sects are belonging + mutual **witnessing** (members attest each
+  other's Provings — community verification, the Strava community-moderation analogue) + shared
+  trials. Sects never sell entry; the only key is a met Standard (L4 — progression is never bought).
+
+### 16.5 What this changes for strikes (the direct answer)
+
+- **Manual input is demoted from *the* source to *a* source** — it builds **depth/foundation**
+  (still real, still yours) but **alone it no longer ascends you**; the Proving does. This is the
+  fix: junk volume can't fake a realm.
+- **`StrikeEvent` gains `source`/`attestation`** (`claimed`/`health`/`witnessed`) — already
+  foreshadowed by NANO N1 ("perceived signals draft; only confirmation strikes; source-tagged,
+  plausibility-capped"). `hammerCount` still = Σ `amount` (depth is depth, regardless of source);
+  attestation weights **Standing**, not depth.
+- **Ascension becomes an event you train toward and *demonstrate*** — the Bottleneck → the Proving →
+  the breakthrough — rather than a number ticking over in the background. The most important moment
+  in the app is now something you *do*, witnessed, not something that *accrues*.
+
+### 16.6 Interconnection (why this makes the whole organism tighter)
+
+- **Trials** — Gates *are* Provings; a Trial's goal can be a Standard; the generator paces toward it;
+  the Breakthrough Gate is the realm Proving. (`§10`)
+- **Readiness / Inner Art** — the Voice advises *when* to attempt a Proving (don't break through
+  depleted — the Bevel readiness gate); a sealed Inner session steadies the foundation before the
+  attempt. (`§15`, NANO N2)
+- **Saga** — the Proving is the Breakthrough beat made literal; passing it writes the chapter, failing
+  it (falling back from the Threshold) is a Regression-adjacent beat — a return, never a punishment.
+  (`§6`, `§12 Return`)
+- **Feats & Titles** — meeting a Standard, reaching a tier, a first witnessed Proving, founding/
+  joining a Sect → feats; titles like *the Proven*, *Elite of the Iron Art*. (`§12`)
+- **The Entity & the Demon** — a new `at_threshold` mood (straining at the ceiling); the Demon swells
+  at the Bottleneck (doubt) and recoils when the Proving lands. (`§13`)
+- **The Codex** — Standing is *per Art* (you can be Tempered in the Iron Art, Foundation in the
+  Written Art); the Constellation (`MASTER_BLUEPRINT C4`) shows each Art's proven tier; the
+  whole-person realm is the brightest proven star.
+- **The economy** — never touches any of it. Standards, Provings, attestation, cohorts, Sect entry
+  are **progression ⇒ free, unbuyable, unspoofable** (L4). Money still only dresses the being.
+
+### 16.7 The metrics & skills from the references, fully used
+
+| Reference | Skill borrowed | Where it lands |
+|---|---|---|
+| **Powerlifting standards / DOTS** | normalize performance → one comparable score → percentile tiers | the per-Art **normalization function** and the **Standard** tier bands (16.2) |
+| **Bevel** | biometric data as truth — HR/HRV/recovery/strain | the **corroborated** attestation + the plausibility engine + the readiness gate on *when* to attempt (16.3, 16.6) |
+| **Strava** | automated plausibility flagging + community witness + verified segments | the **plausibility engine**, **witnessed**/**certified** grades, Sect co-signing (16.3–16.4) |
+| **Runna** | demonstrated ability (estimated times, pace standards), plan-to-goal | Standards as ability ladders; Trials aimed at a Proving; Pace-Insights-style detection of true Standing (16.2, 16.6) |
+| **Solo-Leveling system app** | Rank tiers, Guilds with entry requirements, the assessment ceremony | realms-as-ranks normed to community; **Sect entry Standards**; the Proving as the assessment set-piece (16.4) |

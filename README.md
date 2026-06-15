@@ -43,15 +43,16 @@ Your real-world training is the only fuel. Every strike, sealed ki point, and ke
 10. [Trials — the Forged Path](#trials--the-forged-path)
 11. [Saga — the Chronicle](#saga--the-chronicle)
 12. [The Codex of Arts & the Inner Art](#the-codex-of-arts--the-inner-art)
-13. [Rendering & Feel](#rendering--feel)
-14. [System Hardening](#system-hardening)
-15. [Greenfield Stack & Project Layout](#greenfield-stack--project-layout)
-16. [Getting Started From Zero](#getting-started-from-zero)
-17. [Data Model](#data-model)
-18. [API Surface](#api-surface)
-19. [Monetization](#monetization)
-20. [Build Roadmap](#build-roadmap)
-21. [Invariants & Pitfalls](#invariants--pitfalls)
+13. [Ascension Standards & the Cohort](#ascension-standards--the-cohort)
+14. [Rendering & Feel](#rendering--feel)
+15. [System Hardening](#system-hardening)
+16. [Greenfield Stack & Project Layout](#greenfield-stack--project-layout)
+17. [Getting Started From Zero](#getting-started-from-zero)
+18. [Data Model](#data-model)
+19. [API Surface](#api-surface)
+20. [Monetization](#monetization)
+21. [Build Roadmap](#build-roadmap)
+22. [Invariants & Pitfalls](#invariants--pitfalls)
 
 ---
 
@@ -308,6 +309,18 @@ The Yugen-style purpose arc, grounded in real psychology and manhwa/isekai struc
 
 ---
 
+## Ascension Standards & the Cohort
+
+> *You don't accumulate your way into a realm — you prove your way in.* (Full design: `GAME_DESIGN.md §16`.)
+
+The fix for self-reported grind: a realm gains two axes. **Depth** (`realmForHammerCount(hammerCount)`, unchanged — your foundation, never lost) and **Standing** (what you've *proven*). The highest realm whose **Standard** you've met in an **attested Proving** is your `provenRealm`; `realm` derives from both (`lib/standards.ts`, pure, generalizing `realmForHammerCount` — still never stored). When depth runs ahead of proving you are **at the Threshold** — qi amassed, the breakthrough open (the cultivation "bottleneck," a celebrated state, never a demotion).
+
+A **Standard** is community-normed, like real strength standards: a per-Art-family **normalization function** turns raw performance into one comparable score (a DOTS-style coefficient for strength relative to bodyweight; age-graded pace for cardio; sustained focus for Mind Arts) that bands into the seven realms by **percentile tier** — Foundation … Divine Master become *competence tiers*, not arbitrary counts. **A Gate is a Proving** (the Trial's Gates and the Breakthrough Gate become the realm assessments). **Attestation** climbs `claimed` (self, plausible — the sensor-optional floor) → `corroborated` (health-data plausibility, the anti-spoof) → `witnessed` (a Sect peer co-signs) → `certified` (a real event); a pure **plausibility engine** holds impossible efforts out of Provings while still counting them as depth. **Manual input now builds foundation but no longer ascends you alone — the Proving does.**
+
+The community is **belonging, not ranking**: the **Cohort** is the derived peers who proved the same realm (mutual witness, never a ladder); **Sects/Guilds** gain an **entry Standard** — the literal "meet the requirement to join" — and members witness each other's Provings. Standards, Provings, attestation, cohorts, and Sect entry are **progression ⇒ free, unbuyable, unspoofable**; grandfathered depth becomes `claimed` standing (zero migration loss); `StrikeEvent` gains a `source`/attestation that weights Standing but never depth (`hammerCount` is still Σ `amount`).
+
+---
+
 ## Rendering & Feel
 
 A **hybrid render stack**, each engine for what it does best:
@@ -445,6 +458,8 @@ Realm and evolution **stage are never stored**; `hammerCount` is reconcilable fr
 
 **Arts (design spec — all additive, optional columns):** `Art` (practitionerId, name, family `body/mind/craft/voice/abstinence`, unit, weight, masteryVision, status `focus/active/resting/archived`) · `Trial.artId?` · `VoidSession.artId?` (Body Arts keep `modality`+`reps` untouched; per-family weights normalize units into hammer, server-authoritative + versioned). Per-Art mastery is **derived from the ledger slice** — never stored.
 
+**Ascension Standards (design spec — append-only, identity-preserving):** `ProvingEvent` (practitionerId, realmIndex, artId, standardKey, standingScore, attestation `claimed/corroborated/witnessed/certified`, evidence JSON, occurredAt — **append-only like StrikeEvent**; `provenRealm` and `realm` derive from these + `hammerCount`, never stored) · `StrikeEvent` gains `source`/`attestation` (weights Standing, never depth; `hammerCount` still = Σ `amount`) · `Sect` gains `entryStandard` JSON (the requirement to join). Standard *definitions* + normalization functions are versioned code constants (`constants/standards.ts` + server `lib/standards.ts`, pure) — recomputed, never stored. Cohorts are **derived** (peers at a proven realm), not a table.
+
 **Systems:** `Bond` (value, lastPresenceDate) · `Season` (seasonKey, startsAt, endsAt — limited-time drops) · `Sect` / `SectMember` (social roadmap).
 
 ---
@@ -513,6 +528,8 @@ Ship the cheap, high-impact thing first. Each phase ships independently.
 | **V3 — The Entity, Embodied** | Persistent presence layer across spaces; mood engine (computed); `react_*` trigger contract on Rive + `FallbackEntity` parity; the embodied Demon (ledger-driven); story-marks resolver layer. | Entity present + reactive in all four spaces at 60fps; demon size/distance provably derived from real leak/ward rows; marks earned-only; reduce-motion stills honored. |
 | **A1 — The Codex of Arts** | `Art` model + per-family weights; `Trial.artId`/`VoidSession.artId`; Codex stratum in the Quest Log (Art switcher); Chronicle thread braiding; Goal Dialogue intake (free text → Art + unit + vision). | A v1 account migrates as one implicit Body Art with zero behavior change; two Arts run concurrently (one Focus) with correct per-Art mastery + unified hammer; switching focus is consent-gated + a saga event. |
 | **A2 — The Inner Art** | Guided Begin flow (Gathering Breath → Intent Circulation → train with kind-correct focus cue → the Seal); Stillness quests carry guided inner sessions; inner sessions log as Mind-Art rows; Inner feat family; `circulating` entity state; Voice `circulation` occasion. | Every step skippable in ≤2 taps; protocol completion seals ki via the ledger (tap-seal still works); stillness stays `reps:0`/no-strike; no medical claims in any string; sealed-session chain visible from real rows. |
+| **S1 — Standards & the Proving** | `lib/standards.ts` (pure: per-Art normalization → score → percentile tier; `realmFor(hammer, provings)`); `ProvingEvent` append-only; Gates become Provings; `StrikeEvent.source`/attestation + the plausibility engine; Threshold/Bottleneck entity state. | `realmFor` recomputes identically from `hammerCount` + provings (v1 account = `claimed` at its depth realm, **zero demotion**); manual junk volume raises depth but cannot cross a Threshold; a phone-only self-attested Proving is valid; plausibility holds impossible efforts out of Provings. |
+| **S2 — The Cohort & the Sect** | Health-data corroboration (HealthKit/Health Connect) + witness co-signing; `Sect.entryStandard`; the Cohort belonging surface; Standing marks in the Chronicle + on the entity. | Sect entry requires a met Standard (never sold); witnessing is consent-based; the Cohort exposes no competitive ranking; corroboration strengthens Standing without gating the sensorless. |
 
 **Top risks:** art cost (Form × 7 stages) → ship one fully-staged form first, fund the rest from revenue; 3D on low-end Android → DRACO + baked light + on-demand + 2.5D fallback; scope for a solo dev → the phasing lets you stop after Phase 3 with a genuinely differentiated game.
 
@@ -534,6 +551,7 @@ Ship the cheap, high-impact thing first. Each phase ships independently.
 12. **Trials and Sagas are progression ⇒ free forever.** No priceModel on any of their models, nothing gacha, additive-only (reforging archives, never deletes).
 13. **Feats, Titles, and story-marks are computed from the ledger** with an `earnedBy` audit — never granted, sold, or randomized; progress is never stored. Beauty (procedural/authored/generated art) renders real events and state — it never invents, obscures, or replaces a readout.
 14. **The myth is a mechanism, and the world is self-contained.** Every in-world ritual wraps a real, evidence-based practice (breath pacing, motor imagery, attentional focus, interoception) — and product copy never names external fiction or studies, never makes medical claims, and cites only the practitioner's own data. Inner work amplifies and maintains; it never strikes (`reps: 0` stays law). Arts are additive organization: one entity, one hammer, per-Art mastery always derived.
+15. **Ascension is standard-gated and community-verified — never bought, spoofed, or stored.** Depth derives from `hammerCount` (foundation, never lost); `provenRealm` from append-only attested `ProvingEvent`s; `realm` from both (pure, never stored). Manual volume builds depth but cannot cross a **Threshold** — a **Proving** of a community-normed **Standard** does, attested `claimed→corroborated→witnessed→certified` (verification is anti-spoof + amplifier, never a hard sensor-gate; the self-attested floor preserves offline/sensor-optional). Standards/Provings/Sect-entry are progression ⇒ free + unbuyable; grandfathered depth = `claimed` (zero demotion). Cohorts and Sects are **belonging, not ranking** — shared-standard communities and mutual witnesses, never PvP ladders.
 
 ---
 

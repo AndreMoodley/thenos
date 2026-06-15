@@ -110,6 +110,34 @@ Two strata slot onto the graph without moving a single existing node:
   self-contained-world rule matters most — the UI speaks doctrine ("press the ki into the muscle"),
   the design docs hold the citations, and nothing in between leaks.
 
+### 2.2 The S-layer — the Proving turns the realm derivation into two axes
+
+The standards layer (`GAME_DESIGN §16`) is the sharpest deepening of L1/L2 yet: it splits the realm
+into a **depth** axis (foundation, from `hammerCount` — the old derivation, untouched) and a
+**proven** axis (from append-only, *attested* `ProvingEvent`s), and makes the second the one that
+gates community, identity, and the breakthrough beat.
+
+```
+   hammerCount ──► depthRealm ─┐
+   (foundation, never lost)    ├─► realmFor() ──► realm  (still pure, still never stored)
+   ProvingEvent[] ──► provenRealm ┘                 │
+   (attested: claimed→corroborated→                 ├─ depthRealm > provenRealm ⇒ AT THE THRESHOLD
+    witnessed→certified)                            │   (entity strains · demon swells · Voice: "attempt when ready")
+                                                     ▼
+   a Gate IS a Proving ──► Saga breakthrough beat · Feat · Cohort membership · Sect eligibility
+   plausibility engine ──► impossible efforts build depth but are held out of Provings (Strava-style)
+```
+
+**Why it tightens the organism rather than bolting on:** the Proving reuses the **Gate** that Trials
+already generate (no new ceremony), rides the **same waist** (a Proving is an attested event in the
+fan), keys the **saga's existing breakthrough beat** to a real standard, mints **feats**, and gives
+the **entity** a new `at_threshold` mood and the **Demon** its loudest hour — all from append-only
+rows. New edge classes: **standard-derivation** (performance → normalized score → tier, like every
+other derivation, L1) and **attestation** (a Proving's trust grade, the audit-pointer pattern L2
+extended from "which rows" to "how corroborated"). Money still cannot touch any of it (L4); the
+self-attested floor keeps it sensor-optional (L5); the Cohort/Sect are belonging, not ranking
+(the `§9` guardrail).
+
 **Three shapes to notice:**
 
 1. **The hourglass.** Every form of effort — manual log, quest Begin, offline replay, (later)
@@ -173,6 +201,7 @@ That is L5 as a lived path, not a footnote.
 | Demon *(V3)* | — (derived from leaks/wards/feats) | planned pure derivation | — | serialized | derived | Domain (the body) |
 | Arts / Codex *(A1)* | `Art`, `Trial.artId?`, `VoidSession.artId?` | `lib/arts.ts` + `constants/arts.ts` (families/units/weights, per-Art mastery derived) | focus-switch handler (consent + saga event) | `/arts` (planned) | extend `store/trial.ts` | Codex stratum of the Quest Log; Chronicle braiding |
 | Inner Art *(A2)* | — (Mind-Art `VoidSession`s at `reps:0`) | `constants/inner.ts` (protocols) | rides the waist (seal via ledger) | existing session routes | session flow state | guided Begin flow (`RiteStep`/`BreathGuide`); Stillness quests |
+| Ascension Standards *(S)* | `ProvingEvent` (append-only); `StrikeEvent.source`; `Sect.entryStandard` | `lib/standards.ts` (normalize → score → tier; `realmFor`) + plausibility engine; `constants/standards.ts` | Proving recorded in the waist (Gate = Proving) | `/standards`, `/provings`, `/sects` (planned) | derived in store | the Threshold/Bottleneck on Domain; the Cohort; Standing marks |
 | Voice / Nano | `CoachReflection` (cache) | `lib/voice.ts` | — | `/coach/reflect` | screen-local | Domain voice card |
 | Economy | catalogs + ownership + `Entitlement` | `lib/gacha.ts` (only RNG) | `routes/premium.ts` | `/companions`, `/premium/*` | `store/premium.ts` | Chamber, summons |
 | Celebration | — | `lib/juice.ts`, cinematic catalog | — | `/cinematics` | `hooks/useCinematic.ts` | CinematicOverlay |
@@ -213,6 +242,7 @@ lands in one of them:
 | **T (built)** | The path & the myth: trials structure effort; saga gives it meaning | consent edges (L3) + narrative/audit edges (L2) | L2, L3 |
 | **V (specced)** | The face: panels render audits; feats mint identity; the entity (and demon) embody state | aesthetic-derivation edges (art *from* audits) + earned-identity edges | L1, L2, L4 |
 | **A (specced)** | The life & the channel: any Art becomes the goal-object, a whole life organizes into the Codex; the inner loop makes ki a trained mind-body practice | ownership edges (Art → existing systems) + the first bidirectional mind⇄body edge | L1, L3, **L6** |
+| **S (specced)** | The proving & the cohort: ascension splits into depth + proven Standing; you break through a community-normed standard, attested and witnessed, instead of grinding self-reported volume | standard-derivation edges + attestation edges + belonging (cohort/Sect) edges | L1, L2, L4 |
 | **N (vision)** | The symbiote: the world writes drafts (perception), the system speaks into life (HUD/wards) — perception lands per-Art (A1 pulled the Arts taxonomy forward from N1) | sensory edges (world → ledger, confirm-gated) + ambient edges (system → life, consent-armed) | L2 (N1), L3 (N2), L5 (N3) |
 
 The constant across eras: **no new edge family ever bypasses the waist or breaks a law.** The graph
@@ -243,3 +273,10 @@ this app: *a ledger of real effort, wearing progressively richer bodies.*
 - **Evidence honesty (A2/L6).** The inner loop's claims must stay inside its citations: training
   craft, not therapy; amplification, not magic. The fence is structural — inner work logs at
   `reps:0` and can never strike — so even if the copy ever overreached, the ledger could not.
+- **Ranking creep (S).** The Cohort and Sects must stay belonging, not a ladder — "the only opponent
+  is yesterday's self." Norming (percentile tiers, like strength standards) sets meaningful gates and
+  places you among equals; it must never become head-to-head combat. The structural fence: there is
+  no PvP write path and no stored rank — only derived tiers and shared, witnessed standards.
+- **Verification vs. access (S/L5).** Attestation makes a Standing brighter; it must never lock out
+  the sensorless or the off-grid. The fence: a consistent, plausible self-attested Proving is always
+  the floor — corroboration and witness are amplifiers, never prerequisites.

@@ -444,6 +444,10 @@ gantt
     A1 Codex of Arts                               :a1, after v2, 10d
     A2 Inner Art (breath·imagery·focus·seal)       :crit, a2, after a1, 8d
 
+  section Ascension reform — Standards & Cohort
+    S1 Standards·Proving·plausibility (lib+ProvingEvent) :crit, s1, after a1, 8d
+    S2 Cohort·Sect entry·corroboration·witness         :s2, after s1, 8d
+
   section Horizon (vision)
     N0 Perception spike (HealthKit→draft→confirm)  :n0, after a2, 8d
     N1 Goal Dialogue (subsumed by A1)              :milestone, after a1, 0d
@@ -462,10 +466,13 @@ flowchart LR
   R0 --> V1 --> V2 --> V3
   R1 --> R3
   V2 --> A1 --> A2 --> N0 --> N2 --> N3
+  A1 --> S1 --> S2
   V3 --> N4
   N3 --> N5
   R3 -.feeds.-> N2
   A2 -.honest inputs.-> R3
+  S2 -.corroboration via.-> N0
+  S1 -.Gate=Proving.-> V2
   classDef now fill:#1a0f2e,stroke:#9b5cff,color:#fff;
   class R0,R1,R2,R3,R4 now;
 ```
@@ -540,6 +547,7 @@ existing seam (`CONCEPT_GRAPH §5`) — no rewiring.
 | **C5** | **The Ambient layer** as connective tissue outside the app | entity/trial/Voice → widgets, Live Activity, watch | Connectivity escapes the app bezel; the system reaches you in life (consent-armed). | L5/N3; seam: snapshot |
 | **C6** | **Readiness ⇄ Inner Art loop closed** | A2 sealed sessions feed C1; C1 paces tomorrow | The mind→body→readiness→plan→mind loop becomes a visible cycle, not a one-shot. | L6 bidirectional edge |
 | **C7** | **Cross-faculty "moments"** | a feat + a chapter + a realm crossing that coincide compose into one **set-piece** | Prevents celebration spam (a tension named in `CONCEPT_GRAPH §7`): when several fire at once, the Recap composer merges them into a single, bigger beat. | L2; pacing rule |
+| **C8** | **The Proving & the Cohort** — ascension splits into depth + proven Standing | `hammerCount` (depth) + attested `ProvingEvent`s (proven) → `realm`; a Gate = a Proving; Cohort/Sect = community gated by a met Standard | The deepest answer to "earn it, don't grind it" (`GAME_DESIGN §16`): junk volume can't fake a realm; you break through a community-normed standard, witnessed. Connects ledger → realm → Trials (Gates) → Saga (breakthrough) → Feats → Demon → community, using Bevel (biometric corroboration), Runna (ability standards), Strava (plausibility + witness), DOTS (normalization). | L1 derive · L2 attestation · L4 free/unbuyable |
 
 ---
 
