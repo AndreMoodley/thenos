@@ -68,7 +68,7 @@ A flat hub of four spaces. **One level deep.** Expo Router file-based routes map
 |---|---|---|---|---|
 | **Domain** | `app/index.tsx` | the creature lives here; identity center | the central hub on one subject | entity reacts to live metrics; **Today's Quest**; quick-log actions; ascension fires here |
 | **Quest Log** (Calendar) | `app/calendar.tsx` | — | one-level screen, swipe-reachable | the sworn Trial's phase banner + weekly quest strip + Realignment consent; Binding Vows beneath with live countdowns |
-| **The Chronicle** (Trophy Hall) | `app/trophy-hall.tsx` | collection-as-pride | clean monument screen | the saga's chapters as manhwa episode cards + Turning Points; Ascensions/Trophies/Records fold in as Monuments |
+| **The Chronicle** (Trophy Hall) | `app/trophy-hall.tsx` | collection-as-pride | clean monument screen | the saga's chapters as illustrated manhwa panels + Turning Points + the **Hall of Feats** (titles/medallions, §12); Ascensions/Trophies/Records fold in as Monuments |
 | **Manifestation** | `app/chamber.tsx` | the customization engine | preview + commit, no deep menus | choose form, swap/recolor layers, save presets, Unseal items |
 | **Rebirth** | `app/(rebirth)/` | the creature is *born* | full-screen set-piece | onboarding: the **Mirror Rite** (WOOP identity steps) → trial wizard → the rebirth cinematic |
 
@@ -172,6 +172,10 @@ The only input is showing up. Everything purchasable is identity and environment
 - **The space and the creature share a place** — that shared place is the whole idea.
 - **Story follows fact** — chapters unlock only from logged events; the Chronicle can never be read ahead of the work, and the AI may flavor the myth but never invent the history.
 - **Suggest, never impose** — the plan adapts only by consent (Realignments are proposals); a missed week is met with a re-laid path, not a penalty.
+- **Identity is earned or bought, never confused** — cosmetics are bought; feats, titles, and story-marks are computed from the ledger with an audit, and no amount of money or RNG touches them.
+- **Beauty renders the ledger** — art (procedural, authored, or generated) illustrates real events and real state; it never invents, obscures, or replaces a readout.
+- **The myth is a mechanism** — every in-world ritual wraps a real, evidence-based practice (breath, imagery, attentional focus, interoception); fiction that doesn't make the user objectively better is decoration, and decoration is cut.
+- **The world is self-contained** — product copy never names external fiction or studies; sources live in the design docs, and the Voice cites only the practitioner's own data.
 
 ---
 
@@ -200,3 +204,430 @@ The fusion gains a second axis: **structure** (how training is laid out) and **m
 | Online-only | Offline-first: authored fallback arcs + in-transaction fallback prose; Claude refines lazily when reachable |
 
 The psychology is load-bearing, not garnish: the **Inner Demon's nature is the KiLeak taxonomy** (the obstacle you log is the antagonist you fight), **the entity is the rendered higher self** (future-self vividness), and the Tribulation reframes difficulty as **importance** (identity-based motivation) — which is also, exactly, the manhwa trope.
+
+---
+
+## 11. The Look — "Ink & Ember" (the art direction)
+
+> The current build is honest but austere: dark cards, text, glyphs. Honest is the floor, not the
+> ceiling. The reference is **Yugen's comic-panel UI** — "A New Story Begins…" as an illustrated
+> panel, the current arc as a painted card with a day counter, upcoming arcs glimpsed as covers —
+> fused with the **manhwa page** itself: ink, bloom, foil, speed-lines. Rule zero: **the data never
+> changes; only its costume does.** Beauty is a rendering of the ledger, never a replacement for it.
+
+### 11.1 Principles
+
+1. **Image-first, text-second.** Every story surface (saga header, chapters, feats, trials) is a
+   *panel*: full-bleed art or generative composition with text set INTO it — never a grey card with
+   a title on top. The Quest Log keeps its instrument-panel clarity; the Chronicle becomes a comic.
+2. **One world, four inks.** The void-dark base (`void0/1/2`) stays — it is the paper. Each saga
+   style brings its own ink + accent system that tints *everything* while that saga is active:
+   - **Murim** — ink-wash blacks, vermillion seal-red `#e23d28`, brushed gold; cloud-and-mountain
+     linework; chapter titles like hanging scrolls with a red seal stamp.
+   - **Isekai** — holographic system-blue `#5ac8ff` on deep navy; translucent "system glass" panels
+     with scanline shimmer; status-window chrome (the Solo Leveling material).
+   - **Tower** — brass `#c8963c` + verdigris `#3f8f7a`; architectural etchings, floor-number plates,
+     elevator-gate motifs.
+   - **Regression** — dusk-violet `#7a5cff` + ember `#ff7a18`; double-exposure imagery (the old
+     timeline ghosting behind the new), clock and hourglass fragments.
+3. **The week has weather.** Phase grading tints the whole app subtly: **Gathering** = dawn greys,
+   soft light, low contrast; **Tribulation** = storm — deeper blacks, harder rim-light, faster
+   particle fields; **Quieting** = pre-dawn stillness — desaturated, slow, wide letterboxing. The
+   user *feels* where they are in the plan before reading a word.
+4. **Materials, not flat fills.** Three named materials used everywhere: **system-glass** (quest
+   chips, HUD chrome — translucent, blurred, hairline-edged), **ink-wash** (story panels — layered
+   gradient blooms with paper grain), **foil** (gates, trophies, titles — angular gold sheen that
+   sweeps on device tilt / on focus). Locked things are **silhouette + grain**, never grey boxes.
+5. **Typography is staging.** Chapter/arc titles get a display brush-serif (licensed or variable
+   axis), set large, panel-style with the style's seal/sigil; the Nano/system voice is mono-spaced
+   inside system-glass; body text keeps the current humanist scale. Numerals that matter (reps,
+   countdowns, hammer) get a tabular display cut and count up/down — numbers are protagonists here.
+6. **Motion is panel grammar.** Space transitions stay ≤250ms springs, but story surfaces adopt
+   comic grammar: chapter unlock = the panel **slides in with an ink bloom** and a single frame of
+   white; a fulfilled quest stamps a vermillion seal with a paper-thud haptic; a Gate clear fires
+   speed-lines from the entity; a realm crossing is a full-bleed splash page. Every beat has a
+   reduce-motion variant (a quiet crossfade + the same haptic) — invariant #7 is also an aesthetic.
+
+### 11.2 The art pipeline — three honest tiers
+
+The repo's standing doctrine — *fallbacks are real, authored art drops in additively* — extends to
+beauty itself:
+
+| Tier | What renders | Cost |
+|---|---|---|
+| **P0 — Procedural beauty (the floor, ships first)** | Generative panel compositions seeded **deterministically from the chapter's real `unlockedBy` event** (seed = event hash): ink-bloom fields, particle constellations, the style's palette + motifs, the entity's silhouette composited in. No two chapters look alike; none need an artist; offline always renders. The same engine skins feat medallions and trial covers. | code only |
+| **P1 — Authored sets** | Per-style illustration kits: 1 arc cover + 10 beat panels + 12 feat medallions + UI motifs per style. Authored once, slotted by `styleKey × beatKey`, recolored by palette. | art budget, additive |
+| **P2 — Generated covers (optional, flagged)** | Style-locked AI cover art per saga (the personalized "Yugen cover": *your* demon's silhouette, *your* higher self), generated at forge time, cached forever, P0 as fallback. Art is flavor — never structure, never required, never invents events (it illustrates the synopsis only). | API cost, cached |
+
+**Gate for the whole direction:** screenshot the Chronicle cold (no authored art installed) — if it
+isn't beautiful at P0, the procedural engine isn't done. Yugen's bar, met without Yugen's art team.
+
+---
+
+## 12. The Hall of Feats — achievements as earned identity
+
+Achievements done lazily are a checklist. Done in-world, they are what progression fiction calls
+**titles** — epithets the world bestows because of what you verifiably did ("Sword Demon", "the
+Unbroken"). VOIDBORN already has the only honest substrate for this: the append-only ledger.
+
+### 12.1 Feats
+
+A **Feat** is a named accomplishment **computed from the ledger** — never granted, never bought,
+never random. Definitions are versioned code constants (`constants/feats.ts` mirrored server-side,
+like realms and saga templates); each award stores an **`earnedBy` audit** (the exact rows/values
+that satisfied it), the same honesty contract as saga chapters.
+
+| Family | Examples (condition → feat) |
+|---|---|
+| **Iron** (volume) | first 1,000 hammer → *First Thousand* · 10k → *Iron Tide* · a single 500+ session → *One Sitting* |
+| **Tempo** (consistency) | 7-day streak → *Week of the Hammer* · 30 → *Iron Month* · 100 → **the Unbroken** |
+| **Gates** (assessment) | first Gate → *Gatecrasher* · every Gate in a trial → *Warden's Respect* · a Breakthrough Gate → *Threshold* |
+| **Demon** (the war within) | first ward held → *First Stand* · 10 ward-holds → *Demonslayer* · a week with zero leaks of your demon's nature → *Quiet Mind* |
+| **Path** (trials) | first trial completed → *Pathwalker* · a chained Open Path kept 4+ weeks → *the Long Road* · 3 trials chained → *Trailblazer* |
+| **Realm** (ascension) | each realm crossing is automatically a feat (the shrines, formalized) |
+| **Return** (the comeback — celebrated, never shamed) | trained after 30+ silent days → **the Returner** · rebuilt a 7-streak after a break → *Reforged* |
+| **Hidden** (the manhwa "hidden piece") | category disclosed, conditions secret: dawn sessions, trained on your birthday, a perfect Quieting… surprise is the reward |
+
+### 12.2 Titles
+
+Completing feat sets confers a **Title** — one equippable epithet (`activeTitleKey`) rendered under
+the practitioner's name **everywhere** (Domain, Chronicle, future social), with a micro-effect on
+the entity (a one-off aura shimmer in the title's hue — expression, never a stat). Titles are the
+achievement system wearing the identity system's clothes: PoGo's "favorite badge," murim's epithet,
+and the self-perception loop ("I am *the Unbroken*") in one mechanic. **Never purchasable, never
+gacha, additive-only** — they are the proof layer of the free progression spine.
+
+### 12.3 In the Chronicle
+
+The Chronicle gains the **Hall of Feats** between Turning Points and Monuments: feats render as
+**medallion panels** (P0 generative seals; P1 authored medallions) — earned = full ink + foil sweep;
+unearned = silhouette + grain with the condition as a tease (Zeigarnik, consistent everywhere);
+Hidden feats show only a veiled medallion count. Earning one fires `feat_earned` into the saga
+engine (a real event — it can unlock Hidden chapters), stamps the Turning Points timeline, plays a
+seal-stamp set-piece, and is cited by the Recap Episode. The Voice gets a `feat` occasion.
+
+**Data sketch (for the build phase):** `PractitionerFeat` (practitionerId, featKey, earnedAt,
+earnedBy Json) + `activeTitleKey String?` on Practitioner; feat *definitions and progress are never
+stored* — recomputed from the ledger (`lib/feats.ts`, pure, unit-tested), awarded transactionally in
+the same hooks that advance the saga.
+
+---
+
+## 13. The Entity, Embodied — and the Demon given a body
+
+The entity is the product's soul, and today it is a homebody: alive on the Domain, absent
+everywhere else. Strengthening it means four upgrades and one new character.
+
+### 13.1 Presence — one being, every screen
+
+The entity stops being a screen's content and becomes the **shell's resident**: a persistent
+presence layer (rendered once, composited per-space — the render-split invariant already allows
+exactly this) that scales per context: full-stage in the Domain · perched small at the corner of
+the Quest Log, *turning to look at Today's Quest* · curled beside the prose in the Chronicle,
+ear-flicking as you read · mirrored in the Chamber. It travels between spaces with the swipe — the
+navigation itself becomes "the being follows you."
+
+### 13.2 The mood engine — behavior from the ledger
+
+`demeanor` graduates from a stored label to a computed **mood**, derived (never stored) from real
+state: readiness + streak + time-of-day + recent events + Bond. Moods select idle sets and micro-
+behaviors: **dawn-stretch** (first open of the day) · **focused** (an unfulfilled quest today,
+pre-evening) · **proud loop** (quest fulfilled — holds the pose the rest of the day) · **vigilant**
+(the demon's hour approaches — see 13.4) · **dormant-soft** (long absence: asleep, never sulking —
+it wakes *delighted*, which is the entire ethics of the comeback) · **corrupted** (unchanged) ·
+**reading** (Chronicle open). Bond level unlocks deeper idle variations (already specced — now they
+have somewhere to live).
+
+### 13.3 The reaction vocabulary — every event lands on the body
+
+The juice spec gains a third channel: haptic + audio + **entity reaction**. Quest fulfilled = strike
+pose + seal stamp · Gate cleared = breakthrough stance + speed-lines · chapter unlock = the entity
+turns toward the panel as the ink blooms · realm crossing = the full evolution splash · feat earned
+= it *wears* the shimmer · ward held = see below. Implementation: a small trigger-input contract on
+the artboard (`react_quest`, `react_gate`, `react_chapter`, `react_feat`, `react_ward`), with the
+**FallbackEntity upgraded to the same contract** — the procedural being (P0) must perform the whole
+vocabulary in particles and posture, so the soul ships before the art does.
+
+### 13.4 The Demon, embodied
+
+The Inner Demon has a name and a nature — give it a **body**: a small shadow-creature sharing the
+domain, rendered in the saga style's ink. It is *truthful theater*, driven only by ledger reality:
+it **looms slightly** in your stated trouble-hours and after logged leaks; it **recoils** when a
+ward holds; it **shrinks** as Demon-family feats accumulate; after *Demonslayer*, it keeps a wary
+distance — visibly diminished, never gone (honest psychology: demons are managed, not deleted).
+Tapping it shows its dossier — your own WOOP words, the ward, the win/loss ledger. The fantasy of
+**facing** the obstacle, rendered from nothing but the user's real data. (Reduce-motion: the demon
+becomes a still shadow with state shown by size alone.)
+
+### 13.5 Story-marks — growth you can see and never buy
+
+Surviving the story leaves **marks** on the entity: a hairline scar-glyph per Breakthrough Gate, a
+faint seal per completed trial, an ember in the aura per title held. Marks are a resolver layer
+(`storyMarks`, between lineage and cosmetics), **earned-only, additive-only, opt-out-able** — the
+visual ledger of the climb, readable at a glance like a veteran's body. Cosmetics re-skin; marks
+testify.
+
+**Entity input contract (v2, for the build phase):** existing inputs + `mood`, `readiness`,
+`demonProximity`, `demonScale`, and the five `react_*` triggers — identical contract for Rive
+artboards and the procedural FallbackEntity, unit-tested at the bridge like everything else.
+
+---
+
+## 14. The Codex of Arts — a life, organized
+
+> The reframe: the goal of the app is not "a goal." It is **the Art the practitioner is becoming
+> better at.** A race date passes; an Art is cultivated for life. And a person is never one Art —
+> they are a body being forged, a craft being honed, a mind being stilled. The Codex is where a
+> whole life organizes itself into the app — additively: nothing existing moves, everything
+> existing gains an owner.
+
+### 14.1 The Art is the goal-object
+
+A **Practitioner Art** is a named, long-lived pursuit — the unit of "a project in my life":
+
+- **Family** — which kind of cultivation it is: **Body Arts** (the six existing modalities, mapped
+  1:1 — nothing removed), **Mind Arts** (stillness, breath, study — minutes/pages), **Craft Arts**
+  (writing, music, code — words, pieces, problems), **Voice Arts** (language, social courage —
+  exchanges, attempts), **Abstinence Arts** (clean days held — stillness logic, never strike logic).
+- **A name the practitioner gives it** — "the Iron Art," "the Written Art," "the Quiet Art." Naming
+  is identity work (the same psychology as naming the demon).
+- **A Mastery Vision** — the long-horizon sentence ("deadlift 180kg" / "publish the novel" / "sit
+  one unbroken hour"). Not a deadline — a *direction*. Trials are how the direction becomes weeks.
+- **Its own thread of everything that already exists:** chained Trials, a saga thread, its feats,
+  its slice of the ledger, its derived mastery curve. The Art *owns* instances of the systems we
+  have; it does not replace them.
+
+### 14.2 Focus and cadence — many Arts, one climb
+
+- **One Focus Art** at a time (the Main Quest): it gets the prime surfaces — Today's Quest, the
+  phase weather, the saga's center stage. Focus is a *feature*; ten parallel sprints are a to-do
+  list, which is the thing this app refuses to be.
+- **Resting Arts keep a heartbeat, not a plan:** a light recurring practice cadence (their Open
+  Path trials or single weekly quests) so no Art decays to zero while another is in Tribulation.
+  Switching focus is a consent act (L3) and a saga event — the manhwa "training arc" handoff.
+- **One entity, always.** Every Art strikes the same hammer (per-family unit weights normalize
+  effort — server-authoritative, versioned). The realm remains the measure of the *whole person*;
+  per-Art mastery curves (the generalization of `originArtMastery`, which was always
+  `hammerCount × 0.001` waiting to become plural) measure each pursuit. The being wears all of it:
+  aura threads tint per cultivated Art; story-marks already know which trial minted them.
+
+### 14.3 The Codex surface (depth ≤ 1, nothing moves)
+
+No fifth space. The **Codex** is the Quest Log's top stratum: an in-place Art switcher (cards: name,
+family sigil, mastery curve spark-line, current trial week, next quest) above the existing trial
+panel — one tap focuses an Art, the panel below re-skins. The Chronicle braids threads: chapter
+cards carry their Art's sigil; Turning Points interleave; the Hall of Feats groups by family. The
+Mirror Rite gains one early question — *"Which Art calls first?"* — and the Goal Dialogue
+(NANO N1, pulled forward) classifies free-text dreams into Art + unit + vision.
+
+**Data sketch (build phase):** `Art` (practitionerId, name, family, unit, weight, masteryVision,
+status `focus/active/resting/archived`) · `Trial.artId?` · `VoidSession.artId?` + `amount` in
+art-units (Body Arts keep `modality`+`reps` untouched; the bridge maps them) · saga events gain
+`artId` context. All optional columns, all additive — a v1 practitioner is simply a person with one
+implicit Body Art.
+
+---
+
+## 15. The Inner Art — ki, made real
+
+> The deepest move in the redesign: the world's "inner energy" stops being flavor and becomes a
+> **trained, evidence-based mind-body practice** the app actually teaches. In-world doctrine: *ki
+> is the connection between intent and tissue, and it is trainable.* Out-of-world fact: that is
+> not a metaphor. Motor imagery alone produces measurable strength gains (+13–23% in classic
+> studies — neural drive, not muscle, is the adaptation); attention directed INTO a muscle roughly
+> doubles hypertrophy in trained lifters versus external focus, while external focus wins for
+> expressing performance; six-breaths-per-minute paced breathing measurably raises cardiac vagal
+> activity; body-scan practice trains interoception in weeks. The fiction was describing real
+> machinery all along. We implement the machinery and keep the fiction's name for it.
+
+### 15.1 The doctrine (one law, five protocols)
+
+**In-world:** strikes forge the body; *circulation* forges the channel between mind and body. A
+strike thrown without intent is half a strike. **Out-of-world:** every protocol below is a real,
+cited practice; the skin makes people actually do it.
+
+| Protocol | In-world | The real mechanism | Where it hooks |
+|---|---|---|---|
+| **The Gathering Breath** | "Gather ki before the strike." 60–90s guided slow breath (~6/min) before a session begins | Slow-paced breathing → cardiac vagal activity ↑, arousal regulated to the task | The quest's **Begin** flow, step one — a breath ring in system-glass, haptic-paced |
+| **Intent Circulation** | "Walk the technique along its meridian before the body moves." 20–30s first-person rehearsal of the coming set | Motor imagery / mental rehearsal — neural drive priming; imagery concurrent with training enhances force | Step two of Begin, before the first set; the entity mirrors the rehearsed motion |
+| **Pressing the Ki** | "Press the ki *into* the muscle and hold it there." | **Internal attentional focus** — heightened target-muscle activation; superior hypertrophy in volume work | Cue shown on `flow`/`surge` hypertrophy-type quests during sets |
+| **Sending the Ki** | "Send the ki *through* the target — the body knows the way." | **External attentional focus** — superior force/skill/endurance expression | Cue shown on `gate`/`pillar` performance-type quests — the app picks the right cue per quest kind, which is the actual coaching science |
+| **The Sealing** | "Seal what was forged." 60s down-regulation breath + one felt-sense question after the session | Post-exercise parasympathetic rebound + interoceptive consolidation; closes the loop the Gathering opened | The session's end; this is what the existing **Seal ki** act becomes — earned, not tapped |
+| **Stillness Cultivation** | Rest days are training days for the channel: guided body-scan; *imagined* training when the body must rest | Interoception training; mental practice maintains/builds strength when physical practice pauses (injury, travel, deload) | `stillness` quests stop being empty rest — they carry a 5–10 min guided inner session, still `reps: 0`, still never striking |
+
+### 15.2 What it changes mechanically (all additive)
+
+- **Ki becomes earnable through practice.** Today ki seals by tap (+5). That remains — and completing
+  an inner protocol *is* the canonical seal (the tap becomes the shortcut, the protocol the ritual).
+  Inner sessions log as real `VoidSession`s in the Mind Art (`reps:0` Body-invariant untouched;
+  minutes are the Mind Art's unit) — so the ledger sees the inner work, which means chapters, feats
+  (a new **Inner** feat family: *First Circulation*, *Deep Channel* — 30 sealed sessions, *Unmoved*
+  — a full Quieting with every stillness cultivated), and the demon all respond to it.
+- **Quests gain an inner phase.** Begin → Gathering Breath → Intent Circulation → train (with the
+  kind-correct focus cue) → The Sealing. Every step skippable in two taps forever (L3 — the rite
+  invites, never tolls); the **chain is remembered** ("Sessions sealed this week: 4") because the
+  ledger sees it.
+- **The entity breathes with you.** During the Gathering, the entity's aura contracts and releases
+  on the guide's rhythm (the breath ring IS an entity behavior — V3's mood engine gains a
+  `circulating` state). Readiness (NANO N2) gains its honest inputs: sealed sessions and stillness
+  quality feed the same derivation that paces tomorrow.
+- **The Voice coaches the channel.** New occasion `circulation`: grounded micro-coaching from real
+  rows ("Your sealed sessions rate a point higher this month. The channel is widening.") — never
+  inventing, never clinical.
+
+### 15.3 The honesty fences
+
+- **Supportive, never medical.** The app teaches focus, breath, and rehearsal as *training craft*;
+  it diagnoses nothing, treats nothing, and claims nothing beyond "this is how training is done
+  well." The strong claims live here, in the design docs, with their citations — not in the UI.
+- **The world is self-contained (L6).** Product copy never names its sources — neither the fiction
+  that inspired the skin nor the studies that justify the mechanism. The Voice cites exactly one
+  authority: the practitioner's own ledger.
+- **The fiction never replaces the rep.** Inner work amplifies and maintains; it does not strike.
+  `reps: 0` stays `reps: 0`. The hammer is still only ever swung by the body.
+
+---
+
+## 16. The Standard, the Proving & the Cohort — ascension you have to *earn into*
+
+> The flaw being fixed: ascension today is **cumulative self-reported volume** — grind enough
+> manually-entered reps, cross a number, evolve. That is gameable and, worse, *meaningless against
+> reality*: a thousand junk reps is not strength. The real world doesn't work that way. A powerlifter
+> doesn't enter a division by claiming volume — they **meet a standard, on the platform, witnessed**.
+> Strength is *normed to a community* (your lift relative to your bodyweight, as a percentile tier:
+> novice → intermediate → advanced → elite). THENOS adopts exactly this: **you don't accumulate your
+> way into a realm; you prove your way in.** And this doesn't dilute the identity — it is the most
+> xianxia idea there is: a cultivator amasses qi but **stalls at a bottleneck**, unable to rise until
+> they break through a **tribulation**. We had the volume axis; this adds the breakthrough axis the
+> genre was always about.
+
+### 16.1 The two axes of a realm (identity preserved, then deepened)
+
+A realm now has **depth** (your foundation) and **Standing** (what you've proven) — and crucially,
+*nobody is ever demoted*; this is additive like everything else (`§14` A1's zero-change rule).
+
+- **`depthRealm`** — `realmForHammerCount(hammerCount)`, **exactly as today** (invariant #1, untouched).
+  Cumulative effort still builds your foundation, and your foundation is yours forever. Manual logging
+  still matters — it is how you *train toward* a standard.
+- **`provenRealm`** — the highest realm whose **Standard** you've met in an **attested Proving**
+  (from append-only `ProvingEvent`s). Always ≤ `depthRealm` (you cannot prove past your foundation —
+  the Standard demands the depth too).
+- **At the Threshold (the Bottleneck)** — when `depthRealm > provenRealm`: you have the qi, the gate
+  is open, the breakthrough awaits. This is a *celebrated, legible state*, not a lack — the entity
+  strains against a ceiling, the Voice says the foundation is stable, the Demon looms largest (the
+  heart-demon of doubt before a breakthrough is, again, exactly the genre).
+- **Standing** — the *attestation grade* of your current realm: `claimed` (depth only) →
+  `corroborated` (health-data plausible) → `witnessed` (a Sect peer co-signed) → `certified`
+  (a real event/meet/test). The realm's **Cohort**, its **verified mark**, Sect-eligibility, and the
+  saga's Breakthrough chapter all key off **proven** standing — not raw volume.
+
+`realm` is **still never stored** — it derives from two append-only, reconcilable ledger inputs
+(strikes + provings) via a pure function (`lib/standards.ts realmFor()`, the generalization of
+`realmForHammerCount`). Invariant #1 holds; invariant #2 gets *stronger* (a proving is far harder to
+spoof than a typed number). Grandfathering: existing depth = `claimed` standing — you keep your
+realm, and you're *invited* to prove it. Zero demotion, zero migration pain.
+
+### 16.2 The Standard — community-normed, per Art, generalizable
+
+A **Standard** is the threshold to prove a realm in a given Art — and it is **normed to the
+community of practitioners of that Art**, the way strength standards are normed to bodyweight and
+population percentiles, not pulled from the air.
+
+- **Normalization (the DOTS/Wilks lesson).** Each Art family carries a pure **normalization
+  function** that turns a raw performance into one comparable **Standing Score**, fairly across
+  bodies and contexts: Body/Iron Arts → a strength score relative to bodyweight (a DOTS-style
+  coefficient); Cardio → an age-graded pace / efficiency score; Mind Arts → sustained
+  focus-duration under a fixed protocol; Craft → verified output cadence; Abstinence → clean-streak
+  length. One score, comparable within an Art.
+- **Tiers as percentiles (not arbitrary counts).** The score bands into the **seven realms** by
+  community percentile — Foundation … Divine Master become *competence tiers* ("you lift/run/sit
+  among the top N% who train this Art"), the way "Elite" means a real place in a real distribution.
+  The realm thresholds (`0 / 1,500 / …`) remain the **depth** ladder; the **Standard** is the
+  *demonstrated* ladder layered over it. (The numeric depth thresholds stay in `constants/realms.ts`;
+  the Standard bands live versioned in `constants/standards.ts`, recomputed, never stored.)
+- **The Proving** — the act of meeting a Standard, recorded as an append-only `ProvingEvent`
+  (`realmIndex`, `artId`, `standardKey`, `standingScore`, `attestation`, `evidence` JSON,
+  `occurredAt`). It is a special, witnessed kind of effort — **this is what a `Gate` becomes**: the
+  Trial's Gates (and the Breakthrough Gate, `§10`) are *Provings*. The structure already existed; we
+  are giving Gates teeth. A Trial can be *aimed* at a Proving ("reach the Tempered Standard"), and the
+  generator builds the path to it.
+
+### 16.3 Attestation — earned, verified, still sensor-optional (the Strava lesson)
+
+How a claim becomes trustworthy without locking out the phone-only user, modeled on how real
+communities keep leaderboards honest (automated plausibility + community witness + official
+verification):
+
+| Grade | How it's attested | What it unlocks |
+|---|---|---|
+| **claimed** | self-logged, internally consistent with history | builds depth; the floor for a Proving (a steady, plausible self-attested Proving is valid — sensor-optional, L5/N3 preserved) |
+| **corroborated** | health-data plausibility check passes (HealthKit/Health Connect workout, HR/strain consistent — *Bevel's metrics as the lie-detector*) | a verified mark on the Standing; impossible efforts (à la Strava's auto-flag) are held out of Provings until resolved |
+| **witnessed** | a Sect peer co-signs, or done in a verified group session | required for the higher realms; the community *is* the verification |
+| **certified** | a real meet / event / proctored test logged with its reference | the strongest Standing; a marquee saga beat and feat |
+
+The **plausibility engine** (pure, server-side, the Strava-ML analogue) flags efforts that contradict
+the practitioner's own history and biometrics: flagged effort still builds *depth* but cannot count
+toward a *Proving* until corroborated or witnessed. Verification is therefore an **anti-spoof and an
+amplifier** — never a paywall, never a hard sensor-gate. You can ascend phone-only on consistent,
+plausible self-attestation; you ascend *with a brighter mark* when the community or your body
+co-signs.
+
+### 16.4 The Cohort & the Sect — "you must meet the requirement to join"
+
+This is the community the request asks for — built as **belonging, not ranking** (the standing
+guardrail, `§9`):
+
+- **The Cohort** (automatic, derived, belonging): everyone who has *proven* a given realm in a given
+  Art is, by that fact, of one cohort — peers who met the same bar. You "join" it the instant you
+  prove. It is a place of mutual witness and shared language ("we who reached Forming"), shown as a
+  cohort *of equals*, never a head-to-head ladder. No PvP, no rank-combat — the standing identity
+  ("the only opponent is yesterday's self") is intact; the cohort is who you stand *beside*.
+- **The Sect / Guild** (opt-in, `entryStandard`): the existing `Sect` model gains an **entry
+  Standard** — a self-set requirement to join ("the Tempered Iron Sect: prove Tempered in a Body
+  Art"; "the Dawn Cohort: a 30-day clean Abstinence Standing"). **This is the literal "meet the
+  requirement to join."** Inside, Sects are belonging + mutual **witnessing** (members attest each
+  other's Provings — community verification, the Strava community-moderation analogue) + shared
+  trials. Sects never sell entry; the only key is a met Standard (L4 — progression is never bought).
+
+### 16.5 What this changes for strikes (the direct answer)
+
+- **Manual input is demoted from *the* source to *a* source** — it builds **depth/foundation**
+  (still real, still yours) but **alone it no longer ascends you**; the Proving does. This is the
+  fix: junk volume can't fake a realm.
+- **`StrikeEvent` gains `source`/`attestation`** (`claimed`/`health`/`witnessed`) — already
+  foreshadowed by NANO N1 ("perceived signals draft; only confirmation strikes; source-tagged,
+  plausibility-capped"). `hammerCount` still = Σ `amount` (depth is depth, regardless of source);
+  attestation weights **Standing**, not depth.
+- **Ascension becomes an event you train toward and *demonstrate*** — the Bottleneck → the Proving →
+  the breakthrough — rather than a number ticking over in the background. The most important moment
+  in the app is now something you *do*, witnessed, not something that *accrues*.
+
+### 16.6 Interconnection (why this makes the whole organism tighter)
+
+- **Trials** — Gates *are* Provings; a Trial's goal can be a Standard; the generator paces toward it;
+  the Breakthrough Gate is the realm Proving. (`§10`)
+- **Readiness / Inner Art** — the Voice advises *when* to attempt a Proving (don't break through
+  depleted — the Bevel readiness gate); a sealed Inner session steadies the foundation before the
+  attempt. (`§15`, NANO N2)
+- **Saga** — the Proving is the Breakthrough beat made literal; passing it writes the chapter, failing
+  it (falling back from the Threshold) is a Regression-adjacent beat — a return, never a punishment.
+  (`§6`, `§12 Return`)
+- **Feats & Titles** — meeting a Standard, reaching a tier, a first witnessed Proving, founding/
+  joining a Sect → feats; titles like *the Proven*, *Elite of the Iron Art*. (`§12`)
+- **The Entity & the Demon** — a new `at_threshold` mood (straining at the ceiling); the Demon swells
+  at the Bottleneck (doubt) and recoils when the Proving lands. (`§13`)
+- **The Codex** — Standing is *per Art* (you can be Tempered in the Iron Art, Foundation in the
+  Written Art); the Constellation (`MASTER_BLUEPRINT C4`) shows each Art's proven tier; the
+  whole-person realm is the brightest proven star.
+- **The economy** — never touches any of it. Standards, Provings, attestation, cohorts, Sect entry
+  are **progression ⇒ free, unbuyable, unspoofable** (L4). Money still only dresses the being.
+
+### 16.7 The metrics & skills from the references, fully used
+
+| Reference | Skill borrowed | Where it lands |
+|---|---|---|
+| **Powerlifting standards / DOTS** | normalize performance → one comparable score → percentile tiers | the per-Art **normalization function** and the **Standard** tier bands (16.2) |
+| **Bevel** | biometric data as truth — HR/HRV/recovery/strain | the **corroborated** attestation + the plausibility engine + the readiness gate on *when* to attempt (16.3, 16.6) |
+| **Strava** | automated plausibility flagging + community witness + verified segments | the **plausibility engine**, **witnessed**/**certified** grades, Sect co-signing (16.3–16.4) |
+| **Runna** | demonstrated ability (estimated times, pace standards), plan-to-goal | Standards as ability ladders; Trials aimed at a Proving; Pace-Insights-style detection of true Standing (16.2, 16.6) |
+| **Solo-Leveling system app** | Rank tiers, Guilds with entry requirements, the assessment ceremony | realms-as-ranks normed to community; **Sect entry Standards**; the Proving as the assessment set-piece (16.4) |
