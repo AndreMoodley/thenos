@@ -15,7 +15,7 @@ function secret(): string {
   return s;
 }
 
-export function signToken(payload: { sub: string; role: 'USER' | 'ADMIN' }): string {
+export function signToken(payload: { sub: string; role: 'USER' | 'ADMIN'; ver: number }): string {
   const options: jwt.SignOptions = {
     algorithm: 'HS256',
     expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'],
@@ -23,7 +23,7 @@ export function signToken(payload: { sub: string; role: 'USER' | 'ADMIN' }): str
   return jwt.sign(payload, secret(), options);
 }
 
-export function verifyToken(token: string): { sub: string; role: 'USER' | 'ADMIN' } {
+export function verifyToken(token: string): { sub: string; role: 'USER' | 'ADMIN'; ver?: number } {
   return jwt.verify(token, secret(), { algorithms: ['HS256'] }) as any;
 }
 
@@ -37,7 +37,11 @@ export async function requireAuth(req: AuthedRequest, _res: Response, next: Next
   try {
     const token = bearer(req);
     if (!token) throw unauthorized('Missing bearer token');
-    const { sub, role } = verifyToken(token);
+    const { sub, role, ver } = verifyToken(token);
+    // Revocation check (audit L1): the token's version must match the practitioner's current one.
+    const me = await prisma.practitioner.findUnique({ where: { id: sub }, select: { tokenVersion: true } });
+    if (!me) throw unauthorized('Unknown session');
+    if ((ver ?? 0) !== me.tokenVersion) throw unauthorized('Session revoked — sign in again');
     req.practitionerId = sub;
     req.role = role;
     next();

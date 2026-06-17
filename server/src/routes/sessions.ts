@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 import { badRequest, notFound, wrap } from '../lib/http.js';
 import { logSession } from '../lib/sessionLog.js';
+import { dispatchPending } from '../lib/eventBus.js';
 import { recomputeHammerCount } from '../lib/reconcile.js';
 import { publicPractitioner } from '../lib/serialize.js';
 
@@ -41,6 +42,9 @@ sessionsRouter.post(
     if (!parsed.success) throw badRequest('Invalid session payload');
 
     const result = await prisma.$transaction((tx) => logSession(tx, req.practitionerId!, parsed.data));
+    // Drain this practitioner's outbox now so the saga subscriber's freshly unlocked chapters
+    // ride back in this response (the worker is the durable backstop).
+    const { unlocked } = await dispatchPending(prisma, { practitionerId: req.practitionerId! });
     const session = await prisma.voidSession.findUniqueOrThrow({ where: { id: result.sessionId } });
     const p = await prisma.practitioner.findUniqueOrThrow({ where: { id: req.practitionerId! } });
     res.status(result.idempotentHit ? 200 : 201).json({
@@ -50,7 +54,7 @@ sessionsRouter.post(
       crossed: result.crossed,
       cleansed: result.cleansed,
       fulfilledPlanned: result.fulfilledPlanned,
-      unlockedChapters: result.unlockedChapters,
+      unlockedChapters: unlocked,
     });
   }),
 );

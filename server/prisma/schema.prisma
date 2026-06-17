@@ -169,6 +169,7 @@ model Practitioner {
   passwordHash String
   name         String
   role         Role   @default(USER)
+  tokenVersion Int    @default(0) // bump to revoke every existing JWT for this practitioner (audit L1)
 
   // live metrics (motion drivers) — NOT realm/stage
   ki                Int       @default(100) // 0–100 integrity
@@ -223,6 +224,7 @@ model Practitioner {
   entitlements     Entitlement[]
   sectMemberships  SectMember[]
   coachReflections CoachReflection[]
+  contemplations   Contemplation[]
 
   @@index([email])
 }
@@ -645,6 +647,8 @@ model WagerEvent {
   vowId                 String?
   stripePaymentIntentId String?
   weekOf                DateTime? // for weekly-cap enforcement on wagered_ki
+  criterion             Json? // server-evaluated win condition (lib/wager.ts) for wagered_ki
+  resolveAt             DateTime? // earliest settle time / horizon; the outcome is derived server-side
   createdAt             DateTime     @default(now())
   settledAt             DateTime?
 
@@ -715,4 +719,71 @@ model CoachReflection {
   createdAt      DateTime     @default(now())
 
   @@index([practitionerId, occasion, createdAt])
+}
+
+// ─────────────────────────────────────────────── event backbone (Phase 0)
+//
+// Transactional outbox. A domain event is written in the SAME transaction as the domain change
+// (see src/lib/events.ts `emit`), so the two commit atomically — no dual-write problem. A relay
+// (src/lib/eventBus.ts `dispatchPending`, run by src/worker.ts) publishes unprocessed events to
+// idempotent subscribers. APPEND-ONLY, like StrikeEvent — the audit of what the system reacted to.
+model OutboxEvent {
+  id             String          @id @default(cuid())
+  type           String // DomainEvent['type'] — see src/events/catalog.ts
+  practitionerId String? // lets a request drain only its own events (scoped dispatch)
+  payload        Json
+  occurredAt     DateTime        @default(now())
+  processedAt    DateTime? // set by the relay once every interested subscriber has succeeded
+  deliveries     EventDelivery[]
+
+  @@index([processedAt, occurredAt])
+  @@index([practitionerId, processedAt])
+}
+
+// One row per (event, subscriber). The unique constraint makes consumption idempotent: a relay
+// retry can never double-apply a subscriber's effect, and a failed delivery is retried until ok.
+model EventDelivery {
+  id        String      @id @default(cuid())
+  eventId   String
+  event     OutboxEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  consumer  String
+  status    String      @default("ok") // "ok" | "failed" | "dead" (dead = gave up after MAX_ATTEMPTS)
+  attempts  Int         @default(0)
+  error     String?
+  createdAt DateTime    @default(now())
+
+  @@unique([eventId, consumer])
+  @@index([consumer, createdAt])
+}
+
+// ─────────────────────────────────────────────── The Inner Study (meditation)
+// APPEND-ONLY mind-training log — the analogue of StrikeEvent for meditation. A reps:0 act: it
+// NEVER strikes, never touches hammerCount or the realm (invariants #1–#3). "Wisdom" is the count
+// of these rows (derived, never stored), mirroring realm-from-hammerCount.
+model Contemplation {
+  id             String       @id @default(cuid())
+  practitionerId String
+  practitioner   Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  hexagram       Int // King Wen number 1–64 (the primary hexagram drawn)
+  changing       Int[] // changing line numbers (1–6)
+  transformed    Int // King Wen number the changing lines lead to
+  note           String?
+  kiGain         Int          @default(0)
+  day            DateTime // UTC midnight of the meditation — enforces one contemplation per day
+  createdAt      DateTime     @default(now())
+
+  @@unique([practitionerId, day])
+  @@index([practitionerId, createdAt])
+}
+
+// Idempotency ledger for offline-queue mutations that don't have their own dedupe key (seal/anchor).
+// The unique [practitionerId, clientId] makes a replayed flush a no-op (audit M1).
+model SyncMutation {
+  id             String   @id @default(cuid())
+  practitionerId String
+  clientId       String
+  kind           String
+  createdAt      DateTime @default(now())
+
+  @@unique([practitionerId, clientId])
 }

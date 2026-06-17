@@ -5,6 +5,10 @@ import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 import { badRequest, wrap } from '../lib/http.js';
 import { publicPractitioner } from '../lib/serialize.js';
 import { logSession } from '../lib/sessionLog.js';
+import { dispatchPending } from '../lib/eventBus.js';
+import { emit } from '../lib/events.js';
+import { utcMidnight } from '../lib/protocol.js';
+import { dailyContemplation, glyph } from '../lib/iching.js';
 
 export const practitionerRouter = Router();
 practitionerRouter.use(requireAuth);
@@ -52,6 +56,7 @@ practitionerRouter.post(
     if (!parsed.success) throw badRequest('Invalid strike payload');
 
     const result = await prisma.$transaction((tx) => logSession(tx, req.practitionerId!, parsed.data));
+    const { unlocked } = await dispatchPending(prisma, { practitionerId: req.practitionerId! });
     const p = await prisma.practitioner.findUniqueOrThrow({ where: { id: req.practitionerId! } });
     res.status(201).json({
       practitioner: publicPractitioner(p),
@@ -60,7 +65,7 @@ practitionerRouter.post(
       cleansed: result.cleansed,
       sessionId: result.sessionId,
       fulfilledPlanned: result.fulfilledPlanned,
-      unlockedChapters: result.unlockedChapters,
+      unlockedChapters: unlocked,
     });
   }),
 );
@@ -147,5 +152,90 @@ practitionerRouter.post(
       });
     });
     res.status(201).json({ practitioner: publicPractitioner(result) });
+  }),
+);
+
+// ── The Inner Study (meditation via the I Ching) ─────────────────────────────────────────────
+// A reps:0 act: it NEVER strikes and never touches hammerCount/realm (invariants #1–#3). The day's
+// hexagram is server-derived & deterministic. The first sitting of the day restores a little ki
+// (clarity) and deepens presence via the Contemplated event; later sittings the same day are
+// reflection-only. Subtle, once-a-day — no clarity faucet.
+const MEDITATION_KI_GAIN = 8;
+
+practitionerRouter.post(
+  '/me/meditate',
+  wrap(async (req: AuthedRequest, res) => {
+    const schema = z.object({ note: z.string().max(500).optional() });
+    const parsed = schema.safeParse(req.body ?? {});
+    if (!parsed.success) throw badRequest('Invalid meditation payload');
+    const pid = req.practitionerId!;
+    const now = new Date();
+    const today = utcMidnight(now);
+    const draw = dailyContemplation(`${pid}:${today.toISOString().slice(0, 10)}`);
+
+    let out: { contemplation: any; kiGain: number; alreadyToday: boolean };
+    try {
+      out = await prisma.$transaction(async (tx) => {
+        const existing = await tx.contemplation.findUnique({ where: { practitionerId_day: { practitionerId: pid, day: today } } });
+        if (existing) return { contemplation: existing, kiGain: 0, alreadyToday: true };
+        const cur = await tx.practitioner.findUniqueOrThrow({ where: { id: pid }, select: { ki: true } });
+        const kiGain = clamp(cur.ki + MEDITATION_KI_GAIN, 0, 100) - cur.ki;
+        const contemplation = await tx.contemplation.create({
+          data: {
+            practitionerId: pid,
+            hexagram: draw.primary.n,
+            changing: draw.changing,
+            transformed: draw.transformed.n,
+            note: parsed.data.note ?? null,
+            kiGain,
+            day: today,
+          },
+        });
+        await tx.practitioner.update({ where: { id: pid }, data: { ki: cur.ki + kiGain, dormantSince: null } });
+        await emit(tx, { type: 'Contemplated', practitionerId: pid, hexagram: draw.primary.n, occurredOn: now.toISOString() });
+        return { contemplation, kiGain, alreadyToday: false };
+      });
+    } catch (e) {
+      // Lost a same-day race (unique [practitionerId, day]) — treat as already meditated today.
+      if ((e as { code?: string })?.code !== 'P2002') throw e;
+      const existing = await prisma.contemplation.findUniqueOrThrow({ where: { practitionerId_day: { practitionerId: pid, day: today } } });
+      out = { contemplation: existing, kiGain: 0, alreadyToday: true };
+    }
+
+    const [wisdom, p] = await Promise.all([
+      prisma.contemplation.count({ where: { practitionerId: pid } }),
+      prisma.practitioner.findUniqueOrThrow({ where: { id: pid } }),
+    ]);
+    res.status(out.alreadyToday ? 200 : 201).json({
+      hexagram: { ...draw.primary, glyph: glyph(draw.primary.n) },
+      changing: draw.changing,
+      transformed: { ...draw.transformed, glyph: glyph(draw.transformed.n) },
+      contemplation: out.contemplation,
+      kiGain: out.kiGain,
+      alreadyToday: out.alreadyToday,
+      wisdom,
+      practitioner: publicPractitioner(p),
+    });
+  }),
+);
+
+// Today's contemplation — backs a subtle "Today's Contemplation" line on the Domain. No side effects.
+practitionerRouter.get(
+  '/me/contemplation',
+  wrap(async (req: AuthedRequest, res) => {
+    const pid = req.practitionerId!;
+    const today = utcMidnight(new Date());
+    const draw = dailyContemplation(`${pid}:${today.toISOString().slice(0, 10)}`);
+    const [sat, wisdom] = await Promise.all([
+      prisma.contemplation.findUnique({ where: { practitionerId_day: { practitionerId: pid, day: today } }, select: { id: true } }),
+      prisma.contemplation.count({ where: { practitionerId: pid } }),
+    ]);
+    res.json({
+      hexagram: { ...draw.primary, glyph: glyph(draw.primary.n) },
+      changing: draw.changing,
+      transformed: { ...draw.transformed, glyph: glyph(draw.transformed.n) },
+      satToday: !!sat,
+      wisdom,
+    });
   }),
 );

@@ -1,5 +1,7 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { Prisma } from '@prisma/client';
 import { HttpError } from './lib/http.js';
 import { authRouter } from './routes/auth.js';
@@ -18,13 +20,22 @@ import { syncRouter } from './routes/sync.js';
 import { premiumRouter } from './routes/premium.js';
 import { cinematicsRouter } from './routes/cinematics.js';
 import { adminRouter } from './routes/admin.js';
+import { registerAll } from './subscribers/index.js';
 
 export function createApp() {
+  registerAll(); // event subscribers available for eager request-time outbox drains
   const app = express();
 
   const origins = (process.env.CORS_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
   app.use(cors(origins.length ? { origin: origins } : {})); // dev: reflect origin
+  app.use(helmet());
   app.use(express.json({ limit: '1mb' }));
+
+  // Edge hardening (audit H1/M3). Disabled under tests so suites aren't throttled.
+  if (process.env.NODE_ENV !== 'test') {
+    app.use(rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: 'draft-7', legacyHeaders: false }));
+    app.use('/auth', rateLimit({ windowMs: 15 * 60_000, limit: 50, standardHeaders: 'draft-7', legacyHeaders: false }));
+  }
 
   // Health — no auth. (Invariant gate: curl :4000/health → { ok: true })
   app.get('/health', (_req, res) => res.json({ ok: true, service: 'voidborn', time: new Date().toISOString() }));

@@ -61,6 +61,15 @@ export function decideRarity(
   return { rarity: sampleRarity(scroll, roll), wasPity: false };
 }
 
+/**
+ * Duplicate-pull crystal consolation. PAID (abyssal) pulls only — free Lesser pulls never refund
+ * crystals, so unlimited free summoning can't be scripted into a currency faucet (audit H2).
+ */
+export function dupRefund(scroll: ScrollType, rarity: CompanionRarity): number {
+  if (scroll !== 'abyssal') return 0;
+  return rank(rarity) >= rank('ancient') ? 25 : 5;
+}
+
 export interface SummonResult {
   companionKey: string;
   rarity: CompanionRarity;
@@ -140,11 +149,13 @@ export async function summon(
   let crystalsRefunded = 0;
   if (already) {
     duplicate = true;
-    crystalsRefunded = rank(rarity) >= rank('ancient') ? 25 : 5;
-    await tx.practitioner.update({
-      where: { id: practitionerId },
-      data: { crystals: { increment: crystalsRefunded } },
-    });
+    crystalsRefunded = dupRefund(scroll, rarity); // 0 for free pulls — no faucet (audit H2)
+    if (crystalsRefunded > 0) {
+      await tx.practitioner.update({
+        where: { id: practitionerId },
+        data: { crystals: { increment: crystalsRefunded } },
+      });
+    }
   } else {
     await tx.practitionerCompanion.create({ data: { practitionerId, companionKey: chosen } });
   }

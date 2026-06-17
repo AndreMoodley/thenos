@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 import { badRequest, wrap } from '../lib/http.js';
 import { logSession } from '../lib/sessionLog.js';
+import { dispatchPending } from '../lib/eventBus.js';
 import { publicPractitioner, serializeTrial, serializeSaga } from '../lib/serialize.js';
 import { realmForHammerCount } from '../lib/realms.js';
 import { utcMidnight, canMove } from '../lib/protocol.js';
@@ -12,6 +13,21 @@ export const syncRouter = Router();
 syncRouter.use(requireAuth);
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+
+// Apply a sync mutation at most once per (practitioner, clientId) — makes seal/anchor idempotent on
+// replay (audit M1). The unique [practitionerId, clientId] on SyncMutation is the race-safe net.
+async function applyOnce(pid: string, clientId: string, kind: string, fn: (tx: any) => Promise<void>): Promise<void> {
+  const seen = await prisma.syncMutation.findUnique({ where: { practitionerId_clientId: { practitionerId: pid, clientId } } });
+  if (seen) return;
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.syncMutation.create({ data: { practitionerId: pid, clientId, kind } });
+      await fn(tx);
+    });
+  } catch (e) {
+    if ((e as { code?: string })?.code !== 'P2002') throw e; // raced — already applied, treat as done
+  }
+}
 
 // Offline mutation queue. Server-authoritative systems (currency, ownership, gacha, and the
 // trial/saga GENERATORS) are NOT accepted here — only effort/intent that is safe to replay
@@ -69,6 +85,7 @@ syncRouter.post(
       try {
         if (m.kind === 'session') {
           const r = await prisma.$transaction((tx) => logSession(tx, pid, { ...m, clientId: m.clientId }));
+          const drained = await dispatchPending(prisma, { practitionerId: pid });
           results.push({
             clientId: m.clientId,
             ok: true,
@@ -76,7 +93,7 @@ syncRouter.post(
             crossed: r.crossed,
             idempotent: r.idempotentHit,
             fulfilledPlanned: r.fulfilledPlanned,
-            unlockedChapters: r.unlockedChapters,
+            unlockedChapters: drained.unlocked,
           });
         } else if (m.kind === 'plan_move') {
           // Absolute-set: replaying the same move is a no-op. An impossible move (date now
@@ -114,11 +131,15 @@ syncRouter.post(
           });
           results.push({ clientId: m.clientId, ok: true });
         } else if (m.kind === 'anchor') {
-          await prisma.practitioner.update({ where: { id: pid }, data: { anchorCompletedAt: m.occurredOn ?? new Date(), dormantSince: null } });
+          await applyOnce(pid, m.clientId, 'anchor', async (tx) => {
+            await tx.practitioner.update({ where: { id: pid }, data: { anchorCompletedAt: m.occurredOn ?? new Date(), dormantSince: null } });
+          });
           results.push({ clientId: m.clientId, ok: true });
         } else if (m.kind === 'seal') {
-          const cur = await prisma.practitioner.findUniqueOrThrow({ where: { id: pid }, select: { ki: true } });
-          await prisma.practitioner.update({ where: { id: pid }, data: { ki: clamp(cur.ki + m.amount, 0, 100) } });
+          await applyOnce(pid, m.clientId, 'seal', async (tx) => {
+            const cur = await tx.practitioner.findUniqueOrThrow({ where: { id: pid }, select: { ki: true } });
+            await tx.practitioner.update({ where: { id: pid }, data: { ki: clamp(cur.ki + m.amount, 0, 100) } });
+          });
           results.push({ clientId: m.clientId, ok: true });
         }
       } catch (e: any) {

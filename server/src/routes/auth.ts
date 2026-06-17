@@ -25,7 +25,7 @@ authRouter.post(
     const existing = await prisma.practitioner.findUnique({ where: { email: email.toLowerCase() } });
     if (existing) throw conflict('An entity is already bound to this email', 'EMAIL_TAKEN');
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 12);
     const practitioner = await prisma.$transaction(async (tx) => {
       const p = await tx.practitioner.create({
         data: {
@@ -46,7 +46,7 @@ authRouter.post(
       });
     });
 
-    const token = signToken({ sub: practitioner.id, role: practitioner.role });
+    const token = signToken({ sub: practitioner.id, role: practitioner.role, ver: practitioner.tokenVersion });
     res.status(201).json({ token, practitioner: publicPractitioner(practitioner) });
   }),
 );
@@ -60,7 +60,7 @@ authRouter.post(
     if (!p) throw unauthorized('No entity bound to those credentials');
     const ok = await bcrypt.compare(parsed.data.password, p.passwordHash);
     if (!ok) throw unauthorized('No entity bound to those credentials');
-    const token = signToken({ sub: p.id, role: p.role });
+    const token = signToken({ sub: p.id, role: p.role, ver: p.tokenVersion });
     res.json({ token, practitioner: publicPractitioner(p) });
   }),
 );
@@ -70,7 +70,7 @@ authRouter.post(
   requireAuth,
   wrap(async (req: AuthedRequest, res) => {
     const p = await prisma.practitioner.findUniqueOrThrow({ where: { id: req.practitionerId! } });
-    res.json({ token: signToken({ sub: p.id, role: p.role }) });
+    res.json({ token: signToken({ sub: p.id, role: p.role, ver: p.tokenVersion }) });
   }),
 );
 
@@ -80,5 +80,18 @@ authRouter.get(
   wrap(async (req: AuthedRequest, res) => {
     const p = await prisma.practitioner.findUniqueOrThrow({ where: { id: req.practitionerId! } });
     res.json({ practitioner: publicPractitioner(p) });
+  }),
+);
+
+// Sign out everywhere: bump tokenVersion (invalidates every existing JWT) and re-issue this device.
+authRouter.post(
+  '/revoke',
+  requireAuth,
+  wrap(async (req: AuthedRequest, res) => {
+    const p = await prisma.practitioner.update({
+      where: { id: req.practitionerId! },
+      data: { tokenVersion: { increment: 1 } },
+    });
+    res.json({ token: signToken({ sub: p.id, role: p.role, ver: p.tokenVersion }), practitioner: publicPractitioner(p) });
   }),
 );

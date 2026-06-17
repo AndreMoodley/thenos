@@ -43,7 +43,7 @@ Everything below is the implementation of that single sentence.
 - **Juice** — haptics + audio + snappy springs on every meaningful action; anticipation beats as set-pieces.
 
 ### From Clash Royale — LEAVE
-- **PvP, real-time battles, competitive ladders, global leaderboards.** VOIDBORN is single-player ascension; the only opponent is yesterday's self. (Social, when it comes, is belonging — visiting, Sects — not ranking.)
+- **PvP and real-time battles.** VOIDBORN is single-player ascension; the only opponent is yesterday's self. Social is belonging first (visiting, Sects) — plus opt-in, **verified-only Pantheons** that celebrate top practitioners per art without PvP or a punitive global ladder (`docs/PRACTITIONER_SHOWCASE_DESIGN.md`).
 
 ---
 

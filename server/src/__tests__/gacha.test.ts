@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { decideRarity, ratesFor, disclosedRates, PITY_ANCIENT, PITY_HERALD } from '../lib/gacha.js';
+import { decideRarity, ratesFor, disclosedRates, dupRefund, PITY_ANCIENT, PITY_HERALD } from '../lib/gacha.js';
 
 describe('gacha — the only RNG (disclosed rates + server pity)', () => {
   it('discloses rates that sum to 1 for each scroll', () => {
@@ -38,5 +38,13 @@ describe('gacha — the only RNG (disclosed rates + server pity)', () => {
     const all = disclosedRates();
     expect(all.lesser.pity.ancientAt).toBe(PITY_ANCIENT);
     expect(all.abyssal.pity.voidHeraldAt).toBe(PITY_HERALD);
+  });
+
+  it('refunds crystals only on paid (abyssal) duplicates — free pulls never mint (H2)', () => {
+    expect(dupRefund('lesser', 'ancient')).toBe(0);
+    expect(dupRefund('lesser', 'wandering')).toBe(0);
+    expect(dupRefund('abyssal', 'wandering')).toBe(5);
+    expect(dupRefund('abyssal', 'ancient')).toBe(25);
+    expect(dupRefund('abyssal', 'void_herald')).toBe(25);
   });
 });

@@ -1,14 +1,12 @@
 import type { Prisma, PrismaClient, Modality, PlannedKind } from '@prisma/client';
-import { applyStrike, dayDiff } from './metrics.js';
+import { applyStrike } from './metrics.js';
 import { realmsCrossed, type Realm } from './realms.js';
-import { utcMidnight, weekIndexFor, phasePlanFor, phaseForWeek } from './protocol.js';
-import { advanceSaga, type UnlockedChapterLite } from './sagaEngine.js';
-import type { SagaEvent } from './sagaBeats.js';
+import { utcMidnight } from './protocol.js';
+import { emit } from './events.js';
+import { computeSagaBeats } from './sagaForStrike.js';
 
 type Tx = Prisma.TransactionClient | PrismaClient;
 const PENANCE_REQUIRED = 7; // consecutive full sessions to cleanse a corruption
-const STREAK_BEAT_DAYS = 7; // the Hidden Master notices a week unbroken
-const RETURN_GAP_DAYS = 7; // silence long enough to count as a Regression return
 
 export interface LogSessionInput {
   modality: Modality;
@@ -37,7 +35,9 @@ export interface LogSessionResult {
   cleansed: boolean; // did this session complete a Penance cleanse?
   idempotentHit: boolean; // existing session returned for a repeated clientId
   fulfilledPlanned: FulfilledPlannedLite | null; // the quest this real session fulfilled
-  unlockedChapters: UnlockedChapterLite[]; // saga chapters opened by this real event
+  // NOTE: saga chapters are no longer unlocked inside this call. The strike emits SagaBeatsRaised
+  // to the outbox; the saga subscriber writes chapters off the critical path. Callers obtain the
+  // freshly unlocked chapters by draining the outbox for the practitioner (dispatchPending).
 }
 
 const KIND_PRIORITY: Record<PlannedKind, number> = { gate: 0, pillar: 1, surge: 2, flow: 3, stillness: 4 };
@@ -99,8 +99,11 @@ async function fulfillPlanned(
 /**
  * Single path for logging training. Used by /practitioner/me/strike, POST /sessions and the
  * offline sync flush. Idempotent per (practitioner, clientId) so the offline queue can safely
- * retry. reps:0 ⇒ recovery/stillness (no strike, invariant #3). Quest fulfillment and saga
- * beats ride the SAME transaction — the story can only ever follow the facts.
+ * retry. reps:0 ⇒ recovery/stillness (no strike, invariant #3).
+ *
+ * The strike transaction writes the StrikeEvent + quest fulfillment and emits two outbox events:
+ * `StrikeLogged` (for general consumers) and `SagaBeatsRaised` (the narrative beats). Saga chapter
+ * writing happens off this critical path in the saga subscriber — so this transaction stays lean.
  */
 export async function logSession(
   tx: Tx,
@@ -126,7 +129,6 @@ export async function logSession(
         cleansed: false,
         idempotentHit: true,
         fulfilledPlanned: null,
-        unlockedChapters: [],
       };
     }
   }
@@ -175,60 +177,35 @@ export async function logSession(
   // Quest fulfillment — a link, never a strike (invariant #12).
   const fulfilledPlanned = await fulfillPlanned(tx, practitionerId, session.id, input, occurredOn);
 
-  // Real events → the saga. Order shapes the narrative pacing: a return reopens the path
-  // before the day's quest writes its chapter.
-  const events: SagaEvent[] = [];
-  if (struck && prior.lastLogDate && dayDiff(occurredOn, prior.lastLogDate) >= RETURN_GAP_DAYS) {
-    events.push({ kind: 'returned_after_gap', gapDays: dayDiff(occurredOn, prior.lastLogDate) });
-  }
-  if (fulfilledPlanned) {
-    const trialFulfilled = await tx.plannedSession.count({
-      where: { trialId: fulfilledPlanned.trialId, fulfilledBySessionId: { not: null } },
-    });
-    if (fulfilledPlanned.kind === 'gate') {
-      const nthGate = await tx.plannedSession.count({
-        where: { trialId: fulfilledPlanned.trialId, kind: 'gate', fulfilledBySessionId: { not: null } },
-      });
-      events.push({ kind: 'gate_fulfilled', plannedSessionId: fulfilledPlanned.id, nthGate });
-    }
-    events.push({
-      kind: 'planned_fulfilled',
-      plannedSessionId: fulfilledPlanned.id,
-      planKind: fulfilledPlanned.kind,
-      nthFulfilled: trialFulfilled,
-    });
-    // First fulfillment inside a phase ⇒ the trial has truly entered it.
-    const trial = await tx.trial.findUnique({
-      where: { id: fulfilledPlanned.trialId },
-      include: { plannedSessions: { where: { fulfilledBySessionId: { not: null } }, select: { scheduledOn: true } } },
-    });
-    if (trial) {
-      const plan = phasePlanFor(trial.totalWeeks, trial.goalKind);
-      const phaseOf = (d: Date) => phaseForWeek(plan, weekIndexFor(trial.startDate, d))?.phaseKey;
-      const justFulfilled = await tx.plannedSession.findUniqueOrThrow({
-        where: { id: fulfilledPlanned.id },
-        select: { scheduledOn: true },
-      });
-      const phase = phaseOf(justFulfilled.scheduledOn);
-      if (phase) {
-        const inPhase = trial.plannedSessions.filter((s) => phaseOf(s.scheduledOn) === phase).length;
-        if (inPhase === 1) events.push({ kind: 'phase_entered', phaseKey: phase });
-      }
-    }
-  }
-  if (struck) {
-    const p = await tx.practitioner.findUniqueOrThrow({
-      where: { id: practitionerId },
-      select: { streak: true },
-    });
-    if (p.streak >= STREAK_BEAT_DAYS) events.push({ kind: 'streak_reached', days: p.streak });
-  }
-  for (const realm of struck ? realmsCrossed(before, after) : []) {
-    events.push({ kind: 'realm_crossed', realmIndex: realm.index });
-  }
-  if (cleansed) events.push({ kind: 'corruption_cleansed' });
+  // Derive the narrative beats this strike raised (reads only) and hand them to the bus.
+  const beats = await computeSagaBeats(tx, {
+    practitionerId,
+    struck,
+    before,
+    after,
+    occurredOn,
+    priorLastLogDate: prior.lastLogDate ?? null,
+    fulfilledPlanned,
+    cleansed,
+  });
 
-  const { unlocked } = await advanceSaga(tx, practitionerId, events);
+  // Transactional outbox. reps:0 ⇒ not struck ⇒ no StrikeLogged (invariant #3). SagaBeatsRaised
+  // carries the beats; the saga subscriber writes the chapters off this critical path.
+  if (struck) {
+    await emit(tx, {
+      type: 'StrikeLogged',
+      practitionerId,
+      sessionId: session.id,
+      amount: input.reps,
+      modality: input.modality,
+      occurredOn: occurredOn.toISOString(),
+      before,
+      after,
+    });
+  }
+  if (beats.length > 0) {
+    await emit(tx, { type: 'SagaBeatsRaised', practitionerId, beats });
+  }
 
   return {
     sessionId: session.id,
@@ -239,6 +216,5 @@ export async function logSession(
     cleansed,
     idempotentHit: false,
     fulfilledPlanned,
-    unlockedChapters: unlocked,
   };
 }

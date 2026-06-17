@@ -173,7 +173,7 @@ The Dojo is free. **Domain Packs** are premium third spaces — complete sensory
 Each ships a **Soundscape** (ambient + session SFX), bundled in the IAP — no streaming. In 2.5D a domain is a layered parallax scene; in true-3D it becomes an R3F environment driven by a `domainConfig`.
 
 ### Social Third Places *(roadmap)*
-Oldenburg's "third place" is fundamentally social. VOIDBORN starts personal (your Dojo) and earns the name later: **visiting** other practitioners' domains (read-only), **Sects** (small guilds with shared Trials and quiet accountability), and **decor gifting** (a crystal sink). Consent-gated; belonging, not comparison — **no global leaderboards, ever.**
+Oldenburg's "third place" is fundamentally social. VOIDBORN starts personal (your Dojo) and earns the name later: **visiting** other practitioners' domains (read-only), **Sects** (small guilds with shared Trials and quiet accountability), and **decor gifting** (a crystal sink). Consent-gated and celebratory: alongside belonging, opt-in **Pantheons** show off top practitioners *per art* — ranked **only on verified feats**, tiered so you compete with peers (not a shaming global ladder), each profile fronted by the practitioner's customized entity and a reel of their proof media. See `docs/PRACTITIONER_SHOWCASE_DESIGN.md`.
 
 ---
 

@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 import { badRequest, conflict, forbidden, notFound, wrap } from '../lib/http.js';
 import { summon, disclosedRates } from '../lib/gacha.js';
+import { utcMidnight } from '../lib/protocol.js';
 
 export const companionsRouter = Router();
 companionsRouter.use(requireAuth);
@@ -11,6 +12,7 @@ companionsRouter.use(requireAuth);
 // Abyssal scrolls are premium; here they cost crystals (server-authoritative). In production a real
 // Abyssal Scroll is an IAP consumable verified via /premium before the summon executes.
 const ABYSSAL_COST_CRYSTALS = 160;
+const DAILY_LESSER_CAP = 10; // free Lesser summons per UTC day — caps the faucet (audit H2)
 
 companionsRouter.get(
   '/',
@@ -50,6 +52,14 @@ companionsRouter.post(
         const p = await tx.practitioner.findUniqueOrThrow({ where: { id: req.practitionerId! }, select: { crystals: true } });
         if (p.crystals < ABYSSAL_COST_CRYSTALS) throw forbidden('Not enough Void Crystals for an Abyssal Scroll');
         await tx.practitioner.update({ where: { id: req.practitionerId! }, data: { crystals: { decrement: ABYSSAL_COST_CRYSTALS } } });
+      } else {
+        // Free Lesser Scrolls are daily-capped so they can't be scripted into a faucet (audit H2).
+        const usedToday = await tx.companionSummon.count({
+          where: { practitionerId: req.practitionerId!, scrollType: 'lesser', createdAt: { gte: utcMidnight(new Date()) } },
+        });
+        if (usedToday >= DAILY_LESSER_CAP) {
+          throw forbidden(`Daily free summons spent (${DAILY_LESSER_CAP}/day) — return tomorrow or use an Abyssal Scroll`);
+        }
       }
       return summon(tx, req.practitionerId!, scrollType);
     });
